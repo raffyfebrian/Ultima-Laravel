@@ -54,7 +54,6 @@
             </div>
 
             {{-- Status Update Form --}}
-            @can('update', $order)
             <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                 <h2 class="font-bold text-slate-900 mb-4">Ubah Status Pesanan</h2>
                 <form method="POST" action="{{ route('admin.orders.update-status', $order) }}" class="space-y-3">
@@ -83,7 +82,6 @@
                     </button>
                 </form>
             </section>
-            @endcan
 
             {{-- Order Items --}}
             <section class="rounded-2xl border border-slate-200 bg-white shadow-sm">

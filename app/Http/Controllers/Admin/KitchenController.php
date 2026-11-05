@@ -5,14 +5,11 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderItem;
-use Illuminate\Support\Facades\Gate;
 
 class KitchenController extends Controller
 {
     public function index()
     {
-        Gate::authorize('viewAny', Order::class);
-
         $orders = Order::with(['room', 'items'])
             ->whereIn('order_status', ['pending', 'confirmed', 'preparing'])
             ->latest()
