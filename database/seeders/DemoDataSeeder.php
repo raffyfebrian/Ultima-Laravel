@@ -179,7 +179,12 @@ class DemoDataSeeder extends Seeder
         for ($i = 0; $i < 32; $i++) {
             $daysAgo = $i < 10 ? 0 : (($i - 10) % 7) + 1;
             $date = now()->subDays($daysAgo);
-            $placedAt = $date->copy()->setTime(8 + (($i * 3) % 12), ($i * 11) % 60);
+
+            // Pesanan hari ini dibuat di masa lalu (beberapa menit/jam lalu),
+            // bukan di jam yang lebih besar dari waktu sekarang.
+            $placedAt = $daysAgo === 0
+                ? now()->subMinutes(10 + (($i * 17) % 300))
+                : $date->copy()->setTime(8 + (($i * 3) % 12), ($i * 11) % 60);
 
             $number = 'NG-'.$date->format('Ymd').'-'.str_pad((string) (100 + $i), 3, '0', STR_PAD_LEFT);
 
