@@ -79,12 +79,12 @@
 
                 <p class="mt-4 text-sm text-gray-500">Status pembayaran</p>
                 <p class="mt-1 font-semibold text-amber-700">
-                    {{ str($order->payment_status)->replace('_', ' ')->title() }}
+                    {{ $order->payment_status_label }}
                 </p>
 
                 <p class="mt-4 text-sm text-gray-500">Status pesanan</p>
                 <p class="mt-1 font-semibold">
-                    {{ str($order->order_status)->replace('_', ' ')->title() }}
+                    {{ $order->order_status_label }}
                 </p>
 
                 @if ($order->payment_method === 'qris')

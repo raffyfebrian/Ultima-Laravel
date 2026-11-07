@@ -20,12 +20,29 @@ class OrderController extends Controller
             $query->where('payment_status', $request->payment_status);
         }
 
-        $orders = $query->latest()->paginate(15);
+        if ($request->filled('q')) {
+            $query->where('order_number', 'like', '%'.$request->q.'%');
+        }
+
+        $orders = $query->latest('placed_at')->paginate(15)->withQueryString();
 
         $statuses = ['pending', 'confirmed', 'preparing', 'ready', 'completed', 'cancelled'];
         $paymentStatuses = ['unpaid', 'paid', 'refunded'];
 
-        return view('admin.orders.index', compact('orders', 'statuses', 'paymentStatuses'));
+        $totalOrders = Order::count();
+        $totalRevenue = (float) Order::where('payment_status', 'paid')->sum('total');
+        $activeOrders = Order::whereIn('order_status', ['pending', 'confirmed', 'preparing', 'ready'])->count();
+        $todayOrders = Order::whereDate('placed_at', today())->count();
+
+        return view('admin.orders.index', compact(
+            'orders',
+            'statuses',
+            'paymentStatuses',
+            'totalOrders',
+            'totalRevenue',
+            'activeOrders',
+            'todayOrders',
+        ));
     }
 
     public function show(Order $order)

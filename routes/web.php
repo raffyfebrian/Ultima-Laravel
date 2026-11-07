@@ -28,9 +28,14 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('admin/users')
         ->name('admin.users.')
+        ->middleware('role:superadmin')
         ->controller(UserController::class)
         ->group(function () {
             Route::get('/', 'index')->name('index');
+            Route::post('/', 'store')->name('store');
+            Route::get('/{user}/edit', 'edit')->name('edit');
+            Route::patch('/{user}', 'update')->name('update');
+            Route::delete('/{user}', 'destroy')->name('destroy');
         });
 
     Route::prefix('admin/orders')
@@ -49,6 +54,8 @@ Route::middleware('auth')->group(function () {
         ->controller(CashierController::class)
         ->group(function () {
             Route::get('/', 'index')->name('index');
+            Route::post('/{order}/confirm', 'confirmPayment')->name('confirm');
+            Route::post('/{order}/refund', 'refund')->name('refund');
         });
 
     Route::prefix('admin/kitchen')
@@ -57,6 +64,7 @@ Route::middleware('auth')->group(function () {
         ->controller(KitchenController::class)
         ->group(function () {
             Route::get('/', 'index')->name('index');
+            Route::patch('/{order}/advance', 'advance')->name('advance');
         });
 });
 

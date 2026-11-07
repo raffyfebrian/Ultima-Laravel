@@ -76,8 +76,8 @@ class CreateOrderService
                 'order_number' => 'NGF-' . now()->format('Ymd') . '-'
                     . Str::upper(Str::random(8)),
                 'room_id' => $room->id,
-                'order_status' => 'menunggu_validasi',
-                'payment_status' => 'belum_dibayar',
+                'order_status' => 'pending',
+                'payment_status' => 'unpaid',
                 'payment_method' => $paymentMethod,
                 'subtotal' => $subtotal,
                 'total' => $subtotal,
