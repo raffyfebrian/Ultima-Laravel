@@ -1,9 +1,12 @@
 <?php
 
 use App\Http\Controllers\Admin\CashierController;
+use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\InventoryController;
 use App\Http\Controllers\Admin\KitchenController;
 use App\Http\Controllers\Admin\OrderController;
+use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Guest\RoomOrderController;
 use Illuminate\Support\Facades\Route;
@@ -38,6 +41,42 @@ Route::middleware('auth')->group(function () {
             Route::delete('/{user}', 'destroy')->name('destroy');
         });
 
+    Route::prefix('admin/products')
+        ->name('admin.products.')
+        ->middleware('role:superadmin|admin')
+        ->controller(ProductController::class)
+        ->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('/create', 'create')->name('create');
+            Route::post('/', 'store')->name('store');
+            Route::get('/{product}/edit', 'edit')->name('edit');
+            Route::patch('/{product}', 'update')->name('update');
+            Route::patch('/{product}/toggle', 'toggleAvailability')->name('toggle');
+            Route::delete('/{product}', 'destroy')->name('destroy');
+        });
+
+    Route::prefix('admin/categories')
+        ->name('admin.categories.')
+        ->middleware('role:superadmin|admin')
+        ->controller(CategoryController::class)
+        ->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::post('/', 'store')->name('store');
+            Route::get('/{category}/edit', 'edit')->name('edit');
+            Route::patch('/{category}', 'update')->name('update');
+            Route::patch('/{category}/toggle', 'toggleActive')->name('toggle');
+            Route::delete('/{category}', 'destroy')->name('destroy');
+        });
+
+    Route::prefix('admin/reports')
+        ->name('admin.reports.')
+        ->middleware('role:superadmin|admin')
+        ->controller(ReportController::class)
+        ->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('/export', 'export')->name('export');
+        });
+
     Route::prefix('admin/orders')
         ->name('admin.orders.')
         ->middleware('role:superadmin|admin|cashier|kitchen')
@@ -45,6 +84,7 @@ Route::middleware('auth')->group(function () {
         ->group(function () {
             Route::get('/', 'index')->name('index');
             Route::get('/{order}', 'show')->name('show');
+            Route::get('/{order}/receipt', 'receipt')->name('receipt');
             Route::patch('/{order}/status', 'updateStatus')->name('update-status');
         });
 

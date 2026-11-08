@@ -54,6 +54,13 @@ class OrderController extends Controller
         return view('admin.orders.show', compact('order', 'statuses'));
     }
 
+    public function receipt(Order $order)
+    {
+        $order->load(['room', 'items']);
+
+        return view('admin.orders.receipt', compact('order'));
+    }
+
     public function updateStatus(Request $request, Order $order)
     {
         $request->validate([

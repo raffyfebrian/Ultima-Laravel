@@ -14,10 +14,17 @@
                         Nomor: <span class="font-mono font-medium text-slate-900">{{ $order->order_number }}</span>
                     </p>
                 </div>
-                <a href="{{ route('admin.cashier.index') }}"
-                   class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-teal-300 hover:bg-teal-50">
-                    Buka Kasir
-                </a>
+                <div class="flex flex-wrap gap-2">
+                    <a href="{{ route('admin.orders.receipt', $order) }}"
+                       target="_blank"
+                       class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-teal-900/20 transition hover:from-teal-600 hover:to-emerald-700">
+                        Cetak Struk
+                    </a>
+                    <a href="{{ route('admin.cashier.index') }}"
+                       class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-teal-300 hover:bg-teal-50">
+                        Buka Kasir
+                    </a>
+                </div>
             </header>
 
             @if (session('success'))

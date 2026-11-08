@@ -212,6 +212,13 @@
                                     </td>
                                     <td class="px-6 py-4">
                                         <div class="flex items-center justify-end gap-1.5">
+                                            <a href="{{ route('admin.orders.receipt', $order) }}"
+                                               target="_blank"
+                                               class="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-600 shadow-sm transition-all hover:bg-slate-200 hover:text-slate-800"
+                                               title="Cetak Struk">
+                                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zM7 9V5a2 2 0 012-2h6a2 2 0 012 2v4"></path></svg>
+                                            </a>
+
                                             <a href="{{ route('admin.orders.show', $order) }}"
                                                class="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-50 text-teal-600 shadow-sm shadow-teal-200/50 transition-all hover:bg-teal-100 hover:text-teal-700"
                                                title="Lihat Detail">

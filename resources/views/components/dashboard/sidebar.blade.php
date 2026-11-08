@@ -16,21 +16,37 @@
         [
             'label' => 'Pesanan',
             'route' => 'admin.orders.index',
+            'match' => 'admin.orders.*',
             'roles' => ['superadmin', 'admin', 'cashier', 'kitchen'],
         ],
         [
             'label' => 'Kasir & Pembayaran',
             'route' => 'admin.cashier.index',
+            'match' => 'admin.cashier.*',
             'roles' => ['superadmin', 'admin', 'cashier'],
         ],
         [
             'label' => 'Dapur',
             'route' => 'admin.kitchen.index',
+            'match' => 'admin.kitchen.*',
             'roles' => ['superadmin', 'admin', 'kitchen'],
+        ],
+        [
+            'label' => 'Produk & Kategori',
+            'route' => 'admin.products.index',
+            'match' => 'admin.products.*|admin.categories.*',
+            'roles' => ['superadmin', 'admin'],
+        ],
+        [
+            'label' => 'Laporan Penjualan',
+            'route' => 'admin.reports.index',
+            'match' => 'admin.reports.*',
+            'roles' => ['superadmin', 'admin'],
         ],
         [
             'label' => 'Inventori',
             'route' => 'admin.inventory.index',
+            'match' => 'admin.inventory.*',
             'roles' => ['superadmin', 'admin'],
         ],
     ];
@@ -52,7 +68,7 @@
         @foreach ($menus as $menu)
             @if ($role && in_array($role, $menu['roles'], true))
                 @php
-                    $isActive = $menu['route'] && request()->routeIs($menu['route']);
+                    $isActive = $menu['route'] && request()->routeIs($menu['match'] ?? $menu['route']);
                 @endphp
 
                 <a
