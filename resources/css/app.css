@@ -1,4 +1,3 @@
-
 @import 'tailwindcss';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
@@ -13,7 +12,346 @@
     --color-charcoal: #252525;
     --color-surface: #FFFFFF;
 
+    /* Ngofee green accent (animasi & highlight) */
+    --color-ngofee: #0F766E;
+    --color-ngofee-mint: #5EEAD4;
+    --color-ngofee-soft: #D1FAE5;
+    --color-ngofee-bg: #ECFDF5;
+    --color-ngofee-dark: #14532D;
+    --color-ngofee-border: #A7F3D0;
+
     /* Typography */
     --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
     --font-display: 'Playfair Display', Georgia, serif;
+}
+
+:root {
+    --ngofee-green: #0F766E;
+    --ngofee-mint: #5EEAD4;
+    --ngofee-green-soft: #D1FAE5;
+    --ngofee-green-bg: #ECFDF5;
+    --ngofee-green-dark: #14532D;
+    --ngofee-green-border: #A7F3D0;
+}
+
+[x-cloak] {
+    display: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   Kemunculan konten dashboard (fade-in + slide-up)
+   -------------------------------------------------------------------------- */
+@keyframes dashboard-enter {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.dashboard-enter {
+    animation: dashboard-enter 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.reveal {
+    animation: dashboard-enter 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: var(--reveal-delay, 0ms);
+}
+
+/* --------------------------------------------------------------------------
+   Kartu statistik yang benar-benar bisa diklik
+   -------------------------------------------------------------------------- */
+.stat-card {
+    transition:
+        transform 200ms ease,
+        box-shadow 200ms ease,
+        border-color 200ms ease,
+        background-color 200ms ease;
+}
+
+@media (hover: hover) {
+    .stat-card:hover {
+        transform: translateY(-3px);
+        border-color: var(--ngofee-green-border);
+        box-shadow: 0 10px 24px rgba(15, 118, 110, 0.12);
+    }
+}
+
+.stat-card:active {
+    transform: translateY(-1px) scale(0.995);
+}
+
+/* --------------------------------------------------------------------------
+   Tombol utama
+   -------------------------------------------------------------------------- */
+.action-button {
+    background-color: var(--ngofee-green);
+    color: #fff;
+    transition:
+        transform 150ms ease,
+        background-color 150ms ease,
+        box-shadow 150ms ease;
+}
+
+@media (hover: hover) {
+    .action-button:hover {
+        background-color: #0D9488;
+        box-shadow: 0 4px 12px rgba(15, 118, 110, 0.18);
+    }
+}
+
+.action-button:active {
+    transform: scale(0.98);
+}
+
+.pressable {
+    transition:
+        transform 150ms ease,
+        box-shadow 150ms ease,
+        background-color 150ms ease,
+        border-color 150ms ease,
+        color 150ms ease;
+}
+
+.pressable:active {
+    transform: scale(0.98);
+}
+
+/* --------------------------------------------------------------------------
+   Sidebar
+   -------------------------------------------------------------------------- */
+.sidebar-link {
+    position: relative;
+    transition:
+        color 160ms ease,
+        background-color 160ms ease;
+}
+
+.sidebar-link::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 3px;
+    height: 60%;
+    border-radius: 999px;
+    background-color: var(--ngofee-green);
+    opacity: 0;
+    transform: translateY(-50%) scaleY(0);
+    transform-origin: center;
+    transition:
+        transform 180ms ease,
+        opacity 180ms ease;
+}
+
+.sidebar-link.active {
+    color: var(--ngofee-green);
+    background-color: var(--ngofee-green-bg);
+}
+
+.sidebar-link.active::before {
+    opacity: 1;
+    transform: translateY(-50%) scaleY(1);
+}
+
+@media (hover: hover) {
+    .sidebar-link:not(.active):hover {
+        background-color: #F0FDFA;
+        color: var(--ngofee-green-dark);
+    }
+}
+
+/* Drawer sidebar untuk layar kecil */
+.mobile-drawer {
+    transform: translateX(-100%);
+    transition: transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.mobile-drawer.is-open {
+    transform: translateX(0);
+}
+
+@media (min-width: 768px) {
+    .mobile-drawer {
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        transform: none;
+        transition: none;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   Highlight data yang berubah
+   -------------------------------------------------------------------------- */
+@keyframes order-highlight {
+    0% {
+        background-color: var(--ngofee-green-soft);
+        box-shadow: inset 3px 0 0 var(--ngofee-green);
+    }
+    70% {
+        background-color: rgba(209, 250, 229, 0.45);
+        box-shadow: inset 3px 0 0 var(--ngofee-green);
+    }
+    100% {
+        background-color: transparent;
+        box-shadow: inset 3px 0 0 transparent;
+    }
+}
+
+.order-updated {
+    animation: order-highlight 1.6s ease-out;
+}
+
+@keyframes kitchen-flash {
+    0% {
+        background-color: var(--ngofee-green-soft);
+        border-color: var(--ngofee-green-border);
+    }
+    70% {
+        background-color: rgba(236, 253, 245, 0.6);
+    }
+    100% {
+        background-color: #fff;
+    }
+}
+
+.kitchen-flash {
+    animation: kitchen-flash 1.8s ease-out;
+}
+
+/* Pulse terbatas untuk pesanan siap disajikan */
+@keyframes kitchen-pulse {
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 rgba(15, 118, 110, 0.18);
+    }
+    50% {
+        box-shadow: 0 0 0 7px rgba(15, 118, 110, 0);
+    }
+}
+
+.kitchen-pulse {
+    animation: kitchen-pulse 1.8s ease-out 3;
+}
+
+/* Indikator mendesak tetap memakai warna peringatan, pulse dibatasi */
+@keyframes warning-pulse {
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.35);
+    }
+    50% {
+        box-shadow: 0 0 0 5px rgba(245, 158, 11, 0);
+    }
+}
+
+.warning-pulse {
+    animation: warning-pulse 1.6s ease-out 3;
+}
+
+/* --------------------------------------------------------------------------
+   Skeleton shimmer bernuansa mint
+   -------------------------------------------------------------------------- */
+.skeleton {
+    background: linear-gradient(
+        90deg,
+        #F1F5F4 25%,
+        var(--ngofee-green-soft) 50%,
+        #F1F5F4 75%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes skeleton-shimmer {
+    to {
+        background-position: -200% 0;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   Animasi chart (transform, bukan width/height)
+   -------------------------------------------------------------------------- */
+@keyframes bar-rise {
+    from {
+        opacity: 0.35;
+        transform: scaleY(0.04);
+    }
+    to {
+        opacity: 1;
+        transform: scaleY(1);
+    }
+}
+
+.chart-bar {
+    transform-origin: bottom;
+    animation: bar-rise 640ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: var(--bar-delay, 0ms);
+}
+
+@keyframes bar-grow {
+    from {
+        transform: scaleX(0);
+    }
+    to {
+        transform: scaleX(1);
+    }
+}
+
+.segment-bar {
+    transform-origin: left;
+    animation: bar-grow 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: var(--bar-delay, 0ms);
+}
+
+/* --------------------------------------------------------------------------
+   Toast notifikasi
+   -------------------------------------------------------------------------- */
+@keyframes toast-in {
+    from {
+        opacity: 0;
+        transform: translateY(-8px) translateX(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) translateX(0);
+    }
+}
+
+@keyframes toast-out {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+}
+
+.toast-enter {
+    animation: toast-in 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.toast-leave {
+    animation: toast-out 180ms ease-in both;
+}
+
+/* --------------------------------------------------------------------------
+   Hormati preferensi reduced motion
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-delay: 0ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        transition-delay: 0ms !important;
+    }
 }

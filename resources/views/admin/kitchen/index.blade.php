@@ -3,9 +3,10 @@
         <div class="mx-auto max-w-7xl space-y-8">
 
             {{-- Page Header --}}
-            <header class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-teal-900 p-8 text-white shadow-2xl shadow-teal-900/20">
+            <header class="dashboard-enter relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-teal-900 p-6 text-white shadow-2xl shadow-teal-900/20 md:p-8">
                 <div class="absolute -right-16 -top-16 h-56 w-56 rounded-full bg-teal-400/20 blur-3xl"></div>
                 <div class="absolute -bottom-20 left-1/3 h-56 w-56 rounded-full bg-emerald-400/10 blur-3xl"></div>
+                <div class="absolute inset-x-8 bottom-0 h-px bg-gradient-to-r from-transparent via-ngofee-mint/40 to-transparent"></div>
                 <div class="relative flex flex-wrap items-end justify-between gap-4">
                     <div>
                         <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-300">Kitchen Display</p>
@@ -16,11 +17,11 @@
                     </div>
                     <div class="flex gap-2">
                         <a href="{{ route('admin.kitchen.index') }}"
-                           class="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-5 py-2.5 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/20">
+                           class="pressable inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-5 py-2.5 text-sm font-semibold text-white backdrop-blur hover:bg-white/20">
                             Muat Ulang
                         </a>
                         <a href="{{ route('dashboard') }}"
-                           class="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-slate-900 transition hover:bg-teal-50">
+                           class="pressable inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-slate-900 hover:bg-teal-50">
                             &larr; Kembali
                         </a>
                     </div>
@@ -28,14 +29,14 @@
             </header>
 
             @if (session('success'))
-                <div class="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm font-medium text-emerald-800">
+                <div class="dashboard-enter flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm font-medium text-emerald-800">
                     <span class="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-white">&check;</span>
                     {{ session('success') }}
                 </div>
             @endif
 
             @if (session('info'))
-                <div class="flex items-center gap-3 rounded-2xl border border-sky-200 bg-sky-50 px-5 py-4 text-sm font-medium text-sky-800">
+                <div class="dashboard-enter flex items-center gap-3 rounded-2xl border border-sky-200 bg-sky-50 px-5 py-4 text-sm font-medium text-sky-800">
                     <span class="flex h-6 w-6 items-center justify-center rounded-full bg-sky-500 text-white">i</span>
                     {{ session('info') }}
                 </div>
@@ -43,36 +44,44 @@
 
             {{-- Summary --}}
             <div class="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-                <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                <div class="reveal rounded-2xl border border-slate-200 bg-white p-6 shadow-sm" style="--reveal-delay: 60ms">
                     <div class="flex items-center justify-between">
                         <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Antrian Masuk</p>
                         <span class="h-2.5 w-2.5 rounded-full bg-slate-400"></span>
                     </div>
-                    <p class="mt-2 text-3xl font-bold text-slate-900">{{ $pendingCount }}</p>
+                    <p class="mt-2 text-3xl font-bold text-slate-900">
+                        <span data-countup="{{ $pendingCount }}" data-countup-key="kitchen-pending">{{ number_format($pendingCount, 0, ',', '.') }}</span>
+                    </p>
                     <p class="mt-1 text-xs text-slate-500">Pesanan baru &amp; terkonfirmasi</p>
                 </div>
-                <div class="rounded-2xl border border-amber-200 bg-amber-50/60 p-6 shadow-sm">
+                <div class="reveal rounded-2xl border border-amber-200 bg-amber-50/60 p-6 shadow-sm" style="--reveal-delay: 120ms">
                     <div class="flex items-center justify-between">
                         <p class="text-xs font-semibold uppercase tracking-wider text-amber-700">Sedang Diproses</p>
-                        <span class="h-2.5 w-2.5 animate-pulse rounded-full bg-amber-500"></span>
+                        <span class="warning-pulse h-2.5 w-2.5 rounded-full bg-amber-500"></span>
                     </div>
-                    <p class="mt-2 text-3xl font-bold text-amber-900">{{ $preparingCount }}</p>
+                    <p class="mt-2 text-3xl font-bold text-amber-900">
+                        <span data-countup="{{ $preparingCount }}" data-countup-key="kitchen-preparing">{{ number_format($preparingCount, 0, ',', '.') }}</span>
+                    </p>
                     <p class="mt-1 text-xs text-amber-700">Pesanan di dapur</p>
                 </div>
-                <div class="rounded-2xl border border-teal-200 bg-teal-50/60 p-6 shadow-sm">
+                <div class="reveal rounded-2xl border border-teal-200 bg-teal-50/60 p-6 shadow-sm" style="--reveal-delay: 180ms">
                     <div class="flex items-center justify-between">
                         <p class="text-xs font-semibold uppercase tracking-wider text-teal-700">Siap Disajikan</p>
                         <span class="h-2.5 w-2.5 rounded-full bg-teal-500"></span>
                     </div>
-                    <p class="mt-2 text-3xl font-bold text-teal-900">{{ $readyCount }}</p>
+                    <p class="mt-2 text-3xl font-bold text-teal-900">
+                        <span data-countup="{{ $readyCount }}" data-countup-key="kitchen-ready">{{ number_format($readyCount, 0, ',', '.') }}</span>
+                    </p>
                     <p class="mt-1 text-xs text-teal-700">Menunggu diambil pelayan</p>
                 </div>
-                <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                <div class="reveal rounded-2xl border border-slate-200 bg-white p-6 shadow-sm" style="--reveal-delay: 240ms">
                     <div class="flex items-center justify-between">
                         <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Selesai Hari Ini</p>
                         <span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
                     </div>
-                    <p class="mt-2 text-3xl font-bold text-slate-900">{{ $completedToday }}</p>
+                    <p class="mt-2 text-3xl font-bold text-slate-900">
+                        <span data-countup="{{ $completedToday }}" data-countup-key="kitchen-completed">{{ number_format($completedToday, 0, ',', '.') }}</span>
+                    </p>
                     <p class="mt-1 text-xs text-slate-500">Pesanan tuntas hari ini</p>
                 </div>
             </div>
@@ -90,10 +99,10 @@
                 @endphp
                 @foreach ($tabs as $value => $label)
                     <a href="{{ route('admin.kitchen.index', array_filter(['status' => $value])) }}"
-                       class="rounded-full border px-4 py-2 text-sm font-semibold transition
+                       class="pressable rounded-full border px-4 py-2 text-sm font-semibold
                            {{ request('status', '') === $value
                                ? 'border-teal-600 bg-teal-600 text-white shadow-lg shadow-teal-900/20'
-                               : 'border-slate-200 bg-white text-slate-600 hover:border-teal-300 hover:text-teal-700' }}">
+                               : 'border-slate-200 bg-white text-slate-600 hover:border-ngofee-border hover:bg-ngofee-bg hover:text-ngofee-dark' }}">
                         {{ $label }}
                     </a>
                 @endforeach
@@ -118,7 +127,8 @@
                         };
                     @endphp
 
-                    <article class="flex flex-col overflow-hidden rounded-2xl border-2 {{ $statusStyles[0] }} bg-white shadow-sm transition hover:shadow-xl">
+                    <article class="reveal flex flex-col overflow-hidden rounded-2xl border-2 {{ $statusStyles[0] }} bg-white shadow-sm transition hover:shadow-xl {{ $order->order_status === 'ready' ? 'kitchen-pulse' : '' }} {{ $order->order_status === 'pending' ? 'kitchen-flash' : '' }}"
+                             style="--reveal-delay: {{ min($loop->index, 8) * 60 }}ms">
                         <div class="flex items-start justify-between gap-3 border-b border-slate-100 px-5 py-4">
                             <div>
                                 <p class="font-mono text-sm font-bold text-slate-900">{{ $order->order_number }}</p>
@@ -162,7 +172,7 @@
                                     @csrf
                                     @method('PATCH')
                                     <button type="submit"
-                                            class="rounded-xl bg-gradient-to-r {{ $action[1] }} px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl">
+                                            class="pressable rounded-xl bg-gradient-to-r {{ $action[1] }} px-4 py-2.5 text-sm font-semibold text-white shadow-lg hover:shadow-xl">
                                         {{ $action[0] }} &rarr;
                                     </button>
                                 </form>
