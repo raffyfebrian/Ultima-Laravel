@@ -12,8 +12,8 @@ use App\Http\Controllers\Guest\RoomOrderController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
-});
+    return view('landing');
+})->name('home');
 
 Route::middleware('auth')->group(function () {
     Route::livewire('/dashboard', 'dashboard.index')
