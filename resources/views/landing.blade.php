@@ -25,6 +25,7 @@
                 <a href="#fitur">Fitur</a>
                 <a href="#tentang">Tentang</a>
                 <a href="#cara-kerja">Cara Kerja</a>
+                <a href="#preview">Pratinjau</a>
                 <a href="#faq">FAQ</a>
                 <a class="nav-panel-login" href="{{ $dashboardUrl }}">
                     {{ auth()->check() ? 'Dashboard' : 'Masuk' }}
@@ -52,6 +53,8 @@
             </div>
         </div>
     </header>
+
+    <div class="scroll-progress" aria-hidden="true"><span data-scroll-progress></span></div>
 
     <main id="konten">
         {{-- Hero --}}
@@ -236,7 +239,7 @@
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 14h3v3h-3zM20 14v3M14 20h3M20 20h1"/></svg>
                         </span>
                         <h3>Pesanan QR per meja &amp; kamar</h3>
-                        <p>Tamu memindai QR, memilih menu, lalu pesanan langsung masuk ke sistem tanpa perlu mencatat ulang.</p>
+                        <p>Tamu memindai QR, memilih menu, lalu pesanan langsung masuk ke sistem. QR unik tiap kamar bisa diunduh dan dicetak dari dashboard.</p>
                     </article>
 
                     <article class="feature-card reveal">
@@ -299,6 +302,10 @@
                         <li>
                             <svg class="icon icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>
                             Pesanan tamu langsung tercatat
+                        </li>
+                        <li>
+                            <svg class="icon icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>
+                            QR unik untuk setiap kamar
                         </li>
                         <li>
                             <svg class="icon icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>
@@ -395,42 +402,115 @@
                     </p>
                 </header>
 
-                <div class="preview-grid">
-                    <figure class="preview-frame preview-frame--main reveal">
-                        <div class="frame-bar" aria-hidden="true">
-                            <span class="frame-dot"></span>
-                            <span class="frame-dot"></span>
-                            <span class="frame-dot"></span>
-                            <span class="frame-title">Ngoffe ID · Manajemen Dapur</span>
-                        </div>
-                        <img
-                            src="{{ asset('images/landing/kitchen.webp') }}"
-                            alt="Tampilan Manajemen Dapur Ngoffe ID dengan ringkasan pesanan baru, sedang diproses, dan siap disajikan."
-                            width="1600"
-                            height="1264"
-                            loading="lazy"
-                            decoding="async"
+                <div class="preview-layout">
+                    <div class="preview-tabs" role="tablist" aria-label="Pilih tampilan produk">
+                        <button
+                            type="button"
+                            class="preview-tab"
+                            id="preview-tab-dapur"
+                            role="tab"
+                            aria-selected="true"
+                            aria-controls="preview-panel-dapur"
+                            data-preview-tab
                         >
-                        <figcaption>Antrean dapur dengan status pesanan yang jelas.</figcaption>
-                    </figure>
+                            <b>Dapur</b>
+                            <small>Antrean pesanan dan status masak.</small>
+                        </button>
+                        <button
+                            type="button"
+                            class="preview-tab"
+                            id="preview-tab-menu"
+                            role="tab"
+                            aria-selected="false"
+                            aria-controls="preview-panel-menu"
+                            tabindex="-1"
+                            data-preview-tab
+                        >
+                            <b>Menu tamu</b>
+                            <small>Tampilan pesanan dari QR meja atau kamar.</small>
+                        </button>
+                        <button
+                            type="button"
+                            class="preview-tab"
+                            id="preview-tab-dashboard"
+                            role="tab"
+                            aria-selected="false"
+                            aria-controls="preview-panel-dashboard"
+                            tabindex="-1"
+                            data-preview-tab
+                        >
+                            <b>Dashboard</b>
+                            <small>Ringkasan operasional dan penjualan.</small>
+                        </button>
+                    </div>
 
-                    <figure class="preview-frame preview-frame--side reveal">
-                        <div class="frame-bar" aria-hidden="true">
-                            <span class="frame-dot"></span>
-                            <span class="frame-dot"></span>
-                            <span class="frame-dot"></span>
-                            <span class="frame-title">Ngoffe ID · Menu tamu</span>
+                    <div class="preview-stage">
+                        <div class="preview-panel" id="preview-panel-dapur" role="tabpanel" aria-labelledby="preview-tab-dapur" tabindex="0" data-preview-panel>
+                            <figure class="preview-frame">
+                                <div class="frame-bar" aria-hidden="true">
+                                    <span class="frame-dot"></span>
+                                    <span class="frame-dot"></span>
+                                    <span class="frame-dot"></span>
+                                    <span class="frame-title">Ngoffe ID · Manajemen Dapur</span>
+                                </div>
+                                <div class="preview-media">
+                                    <img
+                                        src="{{ asset('images/landing/kitchen.webp') }}"
+                                        alt="Tampilan Manajemen Dapur Ngoffe ID dengan ringkasan pesanan baru, sedang diproses, dan siap disajikan."
+                                        width="1600"
+                                        height="1264"
+                                        loading="lazy"
+                                        decoding="async"
+                                    >
+                                </div>
+                                <figcaption>Antrean dapur dengan status pesanan yang jelas.</figcaption>
+                            </figure>
                         </div>
-                        <img
-                            src="{{ asset('images/landing/guest-menu.webp') }}"
-                            alt="Halaman menu tamu Ngoffe ID untuk Kamar 101 berisi daftar menu yang dapat dipesan."
-                            width="1600"
-                            height="1264"
-                            loading="lazy"
-                            decoding="async"
-                        >
-                        <figcaption>Menu tamu yang dibuka dari QR meja atau kamar.</figcaption>
-                    </figure>
+
+                        <div class="preview-panel" id="preview-panel-menu" role="tabpanel" aria-labelledby="preview-tab-menu" tabindex="0" data-preview-panel hidden>
+                            <figure class="preview-frame">
+                                <div class="frame-bar" aria-hidden="true">
+                                    <span class="frame-dot"></span>
+                                    <span class="frame-dot"></span>
+                                    <span class="frame-dot"></span>
+                                    <span class="frame-title">Ngoffe ID · Menu tamu</span>
+                                </div>
+                                <div class="preview-media">
+                                    <img
+                                        src="{{ asset('images/landing/guest-menu.webp') }}"
+                                        alt="Halaman menu tamu Ngoffe ID untuk Kamar 101 berisi daftar menu yang dapat dipesan."
+                                        width="1600"
+                                        height="1264"
+                                        loading="lazy"
+                                        decoding="async"
+                                    >
+                                </div>
+                                <figcaption>Menu tamu yang dibuka dari QR meja atau kamar.</figcaption>
+                            </figure>
+                        </div>
+
+                        <div class="preview-panel" id="preview-panel-dashboard" role="tabpanel" aria-labelledby="preview-tab-dashboard" tabindex="0" data-preview-panel hidden>
+                            <figure class="preview-frame">
+                                <div class="frame-bar" aria-hidden="true">
+                                    <span class="frame-dot"></span>
+                                    <span class="frame-dot"></span>
+                                    <span class="frame-dot"></span>
+                                    <span class="frame-title">Ngoffe ID · Dashboard</span>
+                                </div>
+                                <div class="preview-media">
+                                    <img
+                                        src="{{ asset('images/landing/dashboard.webp') }}"
+                                        alt="Tampilan dashboard Ngoffe ID dengan ringkasan operasional dan penjualan."
+                                        width="1600"
+                                        height="1264"
+                                        loading="lazy"
+                                        decoding="async"
+                                    >
+                                </div>
+                                <figcaption>Ringkasan operasional yang dibaca tim dari satu dashboard.</figcaption>
+                            </figure>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -587,6 +667,12 @@
         </section>
     </main>
 
+    <a class="to-top" href="#beranda" data-to-top aria-label="Kembali ke atas halaman">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 19V5"/><path d="m6 11 6-6 6 6"/>
+        </svg>
+    </a>
+
     <footer class="site-footer">
         <div class="shell footer-grid">
             <div class="footer-brand">
@@ -609,6 +695,7 @@
                 <a href="#fitur">Fitur</a>
                 <a href="#tentang">Tentang</a>
                 <a href="#cara-kerja">Cara Kerja</a>
+                <a href="#preview">Pratinjau</a>
                 <a href="#faq">FAQ</a>
             </nav>
 

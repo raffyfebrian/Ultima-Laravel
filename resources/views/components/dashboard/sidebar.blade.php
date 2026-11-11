@@ -31,6 +31,12 @@
             'roles' => ['superadmin', 'admin', 'kitchen'],
         ],
         [
+            'label' => 'Kamar & QR',
+            'route' => 'admin.rooms.index',
+            'match' => 'admin.rooms.*',
+            'roles' => ['superadmin', 'admin'],
+        ],
+        [
             'label' => 'Produk & Kategori',
             'route' => 'admin.products.index',
             'match' => 'admin.products.*|admin.categories.*',

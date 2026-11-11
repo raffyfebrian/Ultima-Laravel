@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\KitchenController;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\ReportController;
+use App\Http\Controllers\Admin\RoomController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Guest\RoomOrderController;
 use Illuminate\Support\Facades\Route;
@@ -96,6 +97,19 @@ Route::middleware('auth')->group(function () {
             Route::get('/', 'index')->name('index');
             Route::post('/{order}/confirm', 'confirmPayment')->name('confirm');
             Route::post('/{order}/refund', 'refund')->name('refund');
+        });
+
+    Route::prefix('admin/rooms')
+        ->name('admin.rooms.')
+        ->middleware('role:superadmin|admin')
+        ->controller(RoomController::class)
+        ->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('/print', 'print')->name('print');
+            Route::get('/{room}/qr', 'qr')->name('qr');
+            Route::get('/{room}/qr/download', 'download')->name('download');
+            Route::patch('/{room}/toggle', 'toggle')->name('toggle');
+            Route::patch('/{room}/regenerate', 'regenerate')->name('regenerate');
         });
 
     Route::prefix('admin/kitchen')

@@ -165,6 +165,66 @@ p {
     transform: none;
 }
 
+/* Garis progres scroll di bagian paling atas */
+.scroll-progress {
+    position: fixed;
+    inset: 0 0 auto;
+    z-index: 120;
+    height: 3px;
+    pointer-events: none;
+}
+
+.scroll-progress span {
+    display: block;
+    height: 100%;
+    background: linear-gradient(90deg, var(--fresh), var(--lime));
+    box-shadow: 0 0 12px rgba(199, 243, 107, 0.45);
+    transform: scaleX(0);
+    transform-origin: 0 50%;
+    will-change: transform;
+}
+
+/* Tombol kembali ke atas */
+.to-top {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    z-index: 70;
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: var(--surface);
+    color: var(--forest);
+    border: 1px solid var(--line-strong);
+    box-shadow: 0 18px 36px -18px rgba(7, 59, 42, 0.5);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(12px);
+    transition:
+        opacity 220ms var(--ease-out),
+        transform 220ms var(--ease-out),
+        background-color 180ms ease,
+        visibility 0s linear 220ms;
+}
+
+.to-top.is-visible {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    transition-delay: 0s;
+}
+
+.to-top:hover {
+    background: var(--mint);
+}
+
+.to-top svg {
+    width: 20px;
+    height: 20px;
+}
+
 /* --------------------------------------------------------------------------
    2. Elemen dasar
    -------------------------------------------------------------------------- */
@@ -246,6 +306,14 @@ p {
 
 .btn:active {
     transform: translateY(0) scale(0.99);
+}
+
+.btn .icon {
+    transition: transform 200ms var(--ease-out);
+}
+
+.btn:hover .icon {
+    transform: translateX(3px);
 }
 
 .btn-sm {
@@ -392,8 +460,14 @@ p {
     opacity: 1;
 }
 
-.primary-nav a:hover::after {
+.primary-nav a:hover::after,
+.primary-nav a.is-active::after {
     transform: scaleX(1);
+}
+
+.primary-nav a.is-active {
+    opacity: 1;
+    font-weight: 600;
 }
 
 .nav-panel-login {
@@ -599,7 +673,7 @@ p {
     border-radius: 50%;
     background: radial-gradient(circle at 50% 45%, rgba(56, 201, 130, 0.42), rgba(22, 163, 106, 0.12) 45%, transparent 70%);
     filter: blur(38px);
-    animation: aura-breathe 9s ease-in-out infinite;
+    animation: aura-breathe 8s ease-in-out infinite;
 }
 
 .scene-ring {
@@ -625,6 +699,7 @@ p {
 
 .scene-layer {
     position: absolute;
+    transform-style: preserve-3d;
     transition: transform 420ms var(--ease-out);
     will-change: transform;
 }
@@ -931,7 +1006,7 @@ p {
 }
 
 .float-orb {
-    animation: orb-bob 9.6s ease-in-out infinite;
+    animation: orb-bob 8s ease-in-out infinite;
 }
 
 @keyframes float-phone {
@@ -1061,7 +1136,13 @@ p {
     .feature-card:hover {
         transform: translateY(-6px);
         border-color: rgba(22, 163, 106, 0.32);
-        box-shadow: 0 28px 56px -30px rgba(7, 59, 42, 0.42);
+        box-shadow:
+            0 28px 56px -30px rgba(7, 59, 42, 0.42),
+            0 0 0 1px rgba(22, 163, 106, 0.12);
+    }
+
+    .feature-card:hover .feature-icon {
+        transform: translateY(-2px) scale(1.04);
     }
 }
 
@@ -1073,6 +1154,7 @@ p {
     border-radius: 14px;
     background: linear-gradient(150deg, rgba(185, 245, 208, 0.72), rgba(56, 201, 130, 0.18));
     color: var(--forest);
+    transition: transform 240ms var(--ease-out);
 }
 
 .feature-icon svg {
@@ -1352,13 +1434,93 @@ p {
 }
 
 /* --------------------------------------------------------------------------
-   9. Pratinjau produk
+   9. Pratinjau produk (interaktif)
    -------------------------------------------------------------------------- */
-.preview-grid {
+.preview-layout {
     display: grid;
-    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
-    gap: 24px;
+    grid-template-columns: minmax(0, 330px) minmax(0, 1fr);
+    gap: clamp(24px, 3.5vw, 44px);
     align-items: start;
+}
+
+.preview-tabs {
+    position: sticky;
+    top: 100px;
+    display: grid;
+    gap: 10px;
+}
+
+.preview-tab {
+    position: relative;
+    display: grid;
+    gap: 4px;
+    padding: 17px 18px 17px 22px;
+    text-align: left;
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow-soft);
+    transition:
+        transform 220ms var(--ease-out),
+        border-color 220ms var(--ease-out),
+        background-color 220ms var(--ease-out),
+        box-shadow 220ms var(--ease-out);
+}
+
+.preview-tab::before {
+    content: '';
+    position: absolute;
+    left: 9px;
+    top: 18px;
+    bottom: 18px;
+    width: 3px;
+    border-radius: 3px;
+    background: var(--emerald);
+    opacity: 0;
+    transform: scaleY(0.4);
+    transition: opacity 220ms var(--ease-out), transform 220ms var(--ease-out);
+}
+
+.preview-tab b {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.preview-tab small {
+    font-size: 0.79rem;
+    line-height: 1.45;
+    color: var(--muted);
+}
+
+.preview-tab:hover {
+    transform: translateY(-2px);
+    border-color: rgba(12, 107, 71, 0.3);
+}
+
+.preview-tab[aria-selected='true'] {
+    background: linear-gradient(150deg, rgba(185, 245, 208, 0.5), rgba(255, 255, 255, 0.94));
+    border-color: rgba(12, 107, 71, 0.34);
+    box-shadow: 0 22px 44px -32px rgba(7, 59, 42, 0.5);
+}
+
+.preview-tab[aria-selected='true']::before {
+    opacity: 1;
+    transform: none;
+}
+
+.preview-stage {
+    min-width: 0;
+}
+
+.preview-panel[hidden] {
+    display: none;
+}
+
+.preview-panel:focus-visible {
+    outline: 2px solid var(--emerald-ink);
+    outline-offset: 6px;
+    border-radius: var(--radius-lg);
 }
 
 .preview-frame {
@@ -1367,10 +1529,18 @@ p {
     background: #0A2A1F;
     border: 1px solid rgba(7, 59, 42, 0.18);
     box-shadow: 0 34px 64px -40px rgba(7, 59, 42, 0.7);
+    animation: preview-in 420ms var(--ease-out) both;
 }
 
-.preview-frame--side {
-    margin-top: 46px;
+@keyframes preview-in {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
 }
 
 .frame-bar {
@@ -1400,10 +1570,27 @@ p {
     color: rgba(185, 245, 208, 0.6);
 }
 
+.preview-media {
+    aspect-ratio: 1600 / 1264;
+    overflow: hidden;
+    background: #F7FAF7;
+}
+
 .preview-frame img {
     width: 100%;
-    height: auto;
+    height: 100%;
+    object-fit: cover;
+    object-position: top center;
     background: #F7FAF7;
+}
+
+html.js .preview-frame img {
+    opacity: 0;
+    transition: opacity 520ms ease;
+}
+
+html.js .preview-frame img.is-loaded {
+    opacity: 1;
 }
 
 .preview-frame figcaption {
@@ -1730,8 +1917,8 @@ html.js .reveal {
     opacity: 0;
     transform: translateY(20px);
     transition:
-        opacity 700ms var(--ease-out),
-        transform 700ms var(--ease-out);
+        opacity 620ms var(--ease-out),
+        transform 620ms var(--ease-out);
     transition-delay: var(--reveal-delay, 0ms);
 }
 
@@ -1884,12 +2071,32 @@ html.js .faq-list > .reveal:nth-child(6) { --reveal-delay: 250ms; }
         display: none;
     }
 
-    .preview-grid {
+    .preview-layout {
         grid-template-columns: minmax(0, 1fr);
     }
 
-    .preview-frame--side {
-        margin-top: 0;
+    .preview-tabs {
+        position: static;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .preview-tab {
+        padding: 13px 12px;
+        text-align: center;
+        border-radius: 14px;
+    }
+
+    .preview-tab::before {
+        display: none;
+    }
+
+    .preview-tab b {
+        font-size: 0.87rem;
+    }
+
+    .preview-tab small {
+        display: none;
     }
 
     .footer-grid {
@@ -1897,7 +2104,7 @@ html.js .faq-list > .reveal:nth-child(6) { --reveal-delay: 250ms; }
     }
 }
 
-@media (max-width: 900px) {
+@media (max-width: 960px) {
     :root {
         --header-h: 70px;
     }
@@ -1953,6 +2160,11 @@ html.js .faq-list > .reveal:nth-child(6) { --reveal-delay: 250ms; }
 
     .primary-nav a:hover {
         background: rgba(185, 245, 208, 0.28);
+    }
+
+    .primary-nav a.is-active {
+        background: rgba(185, 245, 208, 0.42);
+        color: var(--forest);
     }
 
     .nav-panel-login {

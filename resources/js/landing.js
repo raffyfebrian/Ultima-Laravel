@@ -11,17 +11,76 @@ const doc = document;
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
 /* --------------------------------------------------------------------------
-   Header: transparan di atas hero, solid setelah scroll
+   Header, progres scroll, section aktif, dan tombol kembali ke atas
    -------------------------------------------------------------------------- */
 const header = doc.querySelector('[data-site-header]');
+const progressBar = doc.querySelector('[data-scroll-progress]');
+const toTop = doc.querySelector('[data-to-top]');
+const navLinks = Array.from(doc.querySelectorAll('.primary-nav a[href^="#"]'));
 
-function syncHeader() {
-    header?.classList.toggle('is-scrolled', window.scrollY > 16);
+const navSections = navLinks
+    .map((link) => {
+        const id = link.getAttribute('href')?.slice(1);
+        const section = id ? doc.getElementById(id) : null;
+
+        return section ? { link, section } : null;
+    })
+    .filter(Boolean);
+
+function clamp(value, min, max) {
+    return Math.min(Math.max(value, min), max);
 }
 
-syncHeader();
-window.addEventListener('scroll', syncHeader, { passive: true });
-window.addEventListener('pageshow', syncHeader);
+function syncScrollUi() {
+    const scrollTop = window.scrollY || doc.documentElement.scrollTop;
+    const maxScroll = Math.max(doc.documentElement.scrollHeight - window.innerHeight, 1);
+
+    header?.classList.toggle('is-scrolled', scrollTop > 16);
+    toTop?.classList.toggle('is-visible', scrollTop > 640);
+
+    if (progressBar) {
+        progressBar.style.transform = `scaleX(${clamp(scrollTop / maxScroll, 0, 1).toFixed(4)})`;
+    }
+}
+
+function syncActiveNav() {
+    if (navSections.length === 0) {
+        return;
+    }
+
+    const offset = (header?.offsetHeight ?? 76) + 56;
+    const probe = (window.scrollY || doc.documentElement.scrollTop) + offset;
+    let current = navSections[0].link;
+
+    navSections.forEach(({ link, section }) => {
+        if (section.offsetTop <= probe) {
+            current = link;
+        }
+    });
+
+    navLinks.forEach((link) => {
+        const isActive = link === current;
+        link.classList.toggle('is-active', isActive);
+
+        if (isActive) {
+            link.setAttribute('aria-current', 'true');
+        } else {
+            link.removeAttribute('aria-current');
+        }
+    });
+}
+
+function onScroll() {
+    syncScrollUi();
+    syncActiveNav();
+}
+
+syncScrollUi();
+syncActiveNav();
+window.addEventListener('scroll', onScroll, { passive: true });
+window.addEventListener('resize', onScroll, { passive: true });
+window.addEventListener('pageshow', onScroll);
+window.addEventListener('load', onScroll);
 
 /* --------------------------------------------------------------------------
    Menu mobile
@@ -75,7 +134,7 @@ if (navToggle && primaryNav) {
     });
 
     window.addEventListener('resize', () => {
-        if (window.innerWidth > 900 && primaryNav.classList.contains('is-open')) {
+        if (window.innerWidth > 960 && primaryNav.classList.contains('is-open')) {
             setMenu(false);
         }
     });
@@ -140,6 +199,72 @@ if (reduceMotion.matches) {
 }
 
 /* --------------------------------------------------------------------------
+   Transisi gambar saat selesai dimuat
+   -------------------------------------------------------------------------- */
+const previewImages = doc.querySelectorAll('.preview-frame img');
+
+previewImages.forEach((image) => {
+    const markLoaded = () => image.classList.add('is-loaded');
+
+    if (image.complete && image.naturalWidth > 0) {
+        markLoaded();
+    } else {
+        image.addEventListener('load', markLoaded, { once: true });
+        image.addEventListener('error', markLoaded, { once: true });
+    }
+});
+
+/* --------------------------------------------------------------------------
+   Pratinjau produk: tab interaktif
+   -------------------------------------------------------------------------- */
+const previewTabs = Array.from(doc.querySelectorAll('[data-preview-tab]'));
+
+function activatePreviewTab(nextTab, moveFocus = false) {
+    previewTabs.forEach((tab) => {
+        const isNext = tab === nextTab;
+        const panel = doc.getElementById(tab.getAttribute('aria-controls') ?? '');
+
+        tab.setAttribute('aria-selected', String(isNext));
+        tab.tabIndex = isNext ? 0 : -1;
+
+        if (panel) {
+            panel.hidden = !isNext;
+        }
+    });
+
+    if (moveFocus) {
+        nextTab.focus();
+    }
+}
+
+if (previewTabs.length > 0) {
+    previewTabs.forEach((tab, index) => {
+        tab.addEventListener('click', () => activatePreviewTab(tab));
+
+        tab.addEventListener('keydown', (event) => {
+            let nextIndex = null;
+
+            if (event.key === 'ArrowDown' || event.key === 'ArrowRight') {
+                nextIndex = (index + 1) % previewTabs.length;
+            } else if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') {
+                nextIndex = (index - 1 + previewTabs.length) % previewTabs.length;
+            } else if (event.key === 'Home') {
+                nextIndex = 0;
+            } else if (event.key === 'End') {
+                nextIndex = previewTabs.length - 1;
+            }
+
+            if (nextIndex === null) {
+                return;
+            }
+
+            event.preventDefault();
+            activatePreviewTab(previewTabs[nextIndex], true);
+        });
+    });
+}
+
+/* --------------------------------------------------------------------------
    FAQ accordion
    -------------------------------------------------------------------------- */
 const faqButtons = doc.querySelectorAll('[data-faq-button]');
@@ -164,50 +289,35 @@ faqButtons.forEach((button) => {
 });
 
 /* --------------------------------------------------------------------------
-   Parallax ringan pada ilustrasi hero
+   Parallax ringan + tilt pada ilustrasi hero
    -------------------------------------------------------------------------- */
 const scene = doc.querySelector('[data-parallax-scene]');
 const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
 
 if (scene && finePointer.matches && !reduceMotion.matches) {
     const layers = scene.querySelectorAll('.scene-layer');
-    let frame = 0;
-    let pointerX = 0;
-    let pointerY = 0;
-
-    const render = () => {
-        frame = 0;
-
-        layers.forEach((layer) => {
-            const depth = Number.parseFloat(layer.dataset.depth ?? '0');
-
-            layer.style.transform = `translate3d(${(-pointerX * depth * 18).toFixed(2)}px, ${(
-                -pointerY * depth * 14
-            ).toFixed(2)}px, 0)`;
-        });
-    };
 
     scene.addEventListener(
         'pointermove',
         (event) => {
             const rect = scene.getBoundingClientRect();
+            const pointerX = (event.clientX - rect.left) / rect.width - 0.5;
+            const pointerY = (event.clientY - rect.top) / rect.height - 0.5;
 
-            pointerX = (event.clientX - rect.left) / rect.width - 0.5;
-            pointerY = (event.clientY - rect.top) / rect.height - 0.5;
+            layers.forEach((layer) => {
+                const depth = Number.parseFloat(layer.dataset.depth ?? '0');
+                const shiftX = (-pointerX * depth * 18).toFixed(2);
+                const shiftY = (-pointerY * depth * 14).toFixed(2);
+                const tiltX = (-pointerY * depth * 3).toFixed(2);
+                const tiltY = (pointerX * depth * 4).toFixed(2);
 
-            if (!frame) {
-                frame = window.requestAnimationFrame(render);
-            }
+                layer.style.transform = `translate3d(${shiftX}px, ${shiftY}px, 0) rotateX(${tiltX}deg) rotateY(${tiltY}deg)`;
+            });
         },
         { passive: true },
     );
 
     scene.addEventListener('pointerleave', () => {
-        if (frame) {
-            window.cancelAnimationFrame(frame);
-            frame = 0;
-        }
-
         layers.forEach((layer) => {
             layer.style.transform = '';
         });
