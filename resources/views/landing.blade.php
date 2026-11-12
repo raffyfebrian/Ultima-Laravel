@@ -3,7 +3,7 @@
     description="Ngoffe ID menyatukan pesanan QR dari meja dan kamar, antrean dapur, pembayaran kasir, stok bahan, dan laporan penjualan dalam satu alur kerja."
 >
     @php
-        $dashboardUrl = auth()->check() ? route('dashboard') : route('login');
+        $dashboardUrl = auth()->check() ? route('dashboard') : route('guest.order.entry');
         $loginUrl = route('login');
     @endphp
 
@@ -23,12 +23,13 @@
             <nav class="primary-nav" id="nav-menu" aria-label="Navigasi utama">
                 <a href="#beranda">Beranda</a>
                 <a href="#fitur">Fitur</a>
+                <a href="#kamar-qr">Kamar &amp; QR</a>
                 <a href="#tentang">Tentang</a>
                 <a href="#cara-kerja">Cara Kerja</a>
                 <a href="#preview">Pratinjau</a>
                 <a href="#faq">FAQ</a>
                 <a class="nav-panel-login" href="{{ $dashboardUrl }}">
-                    {{ auth()->check() ? 'Dashboard' : 'Masuk' }}
+                    {{ auth()->check() ? 'Dashboard' : 'Mulai Sekarang' }}
                 </a>
             </nav>
 
@@ -119,6 +120,18 @@
 
                         <div class="scene-layer scene-layer--orb" data-depth="0.55">
                             <div class="orb float-orb"></div>
+                        </div>
+
+                        <div class="scene-layer scene-layer--cup" data-depth="0.9">
+                            <div class="coffee-cup float-cup">
+                                <span class="cup-saucer" aria-hidden="true"></span>
+                                <span class="cup-steam cup-steam--one" aria-hidden="true"></span>
+                                <span class="cup-steam cup-steam--two" aria-hidden="true"></span>
+                                <span class="cup-steam cup-steam--three" aria-hidden="true"></span>
+                                <span class="cup-body" aria-hidden="true"></span>
+                                <span class="cup-handle" aria-hidden="true"></span>
+                                <span class="cup-shadow" aria-hidden="true"></span>
+                            </div>
                         </div>
 
                         <div class="scene-layer scene-layer--phone" data-depth="0.3">
@@ -281,6 +294,172 @@
                         <h3>Laporan penjualan</h3>
                         <p>Rekap pendapatan, jumlah transaksi, dan menu terjual per periode, siap diekspor ke CSV.</p>
                     </article>
+                </div>
+            </div>
+        </section>
+
+        {{-- Kamar & QR --}}
+        <section class="section section--qr" id="kamar-qr" aria-labelledby="kamar-qr-title">
+            <div class="qr-bg" aria-hidden="true">
+                <span class="qr-glow qr-glow--one"></span>
+                <span class="qr-glow qr-glow--two"></span>
+                <span class="qr-grid-lines"></span>
+            </div>
+
+            <div class="shell qr-grid">
+                <div class="qr-copy">
+                    <p class="eyebrow eyebrow--light reveal">
+                        <span class="eyebrow-dot" aria-hidden="true"></span>
+                        Scan • Pilih • Pesan
+                    </p>
+                    <h2 class="reveal" id="kamar-qr-title" style="--reveal-delay: 60ms">
+                        Dari kamar, langsung<br>ke menu favoritmu.
+                    </h2>
+                    <p class="qr-lead reveal" style="--reveal-delay: 120ms">
+                        Cukup scan QR yang tersedia di kamar. Pilih makanan dan minuman, kirim
+                        pesanan, dan pantau statusnya—tanpa daftar atau login.
+                    </p>
+
+                    <ul class="qr-points">
+                        <li class="reveal" style="--reveal-delay: 180ms">
+                            <span class="qr-point-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 14h3v3h-3zM20 14v3M14 20h3M20 20h1"/></svg>
+                            </span>
+                            <span>
+                                <b>1. Scan QR kamar</b>
+                                <small>QR yang terpasang di kamar mengidentifikasi kamar secara otomatis. Tidak perlu memilih kamar lagi.</small>
+                            </span>
+                        </li>
+                        <li class="reveal" style="--reveal-delay: 240ms">
+                            <span class="qr-point-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h14v16l-3-2-2 2-2-2-2 2-2-2-3 2V4Z"/><path d="M9 8h6M9 12h6"/></svg>
+                            </span>
+                            <span>
+                                <b>2. Pilih menu</b>
+                                <small>Jelajahi makanan dan minuman, atur jumlah, lalu tambahkan catatan khusus untuk pesananmu.</small>
+                            </span>
+                        </li>
+                        <li class="reveal" style="--reveal-delay: 300ms">
+                            <span class="qr-point-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2-6 4 12 2-6h6"/></svg>
+                            </span>
+                            <span>
+                                <b>3. Kirim pesanan</b>
+                                <small>Pesanan masuk ke sistem operasional dan statusnya dapat dipantau dari tautan pesanan.</small>
+                            </span>
+                        </li>
+                    </ul>
+
+                    <div class="qr-actions reveal" style="--reveal-delay: 360ms">
+                        <a class="btn btn-lime" href="#cara-kerja">
+                            Lihat Cara Kerja
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M5 12h14"/><path d="m13 6 6 6-6 6"/>
+                            </svg>
+                        </a>
+                        <a class="btn qr-btn-ghost" href="{{ route('guest.order.entry') }}">
+                            Pesan Sekarang
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M5 12h14"/><path d="m13 6 6 6-6 6"/>
+                            </svg>
+                        </a>
+                    </div>
+
+                    <p class="qr-note reveal" style="--reveal-delay: 420ms">
+                        Alur pemesanan tamu langsung membuka menu kamar tanpa akun staf. QR pada
+                        ilustrasi hanya dekoratif dan tidak dapat dipindai; QR asli dibuat oleh staf
+                        sesuai kamar.
+                    </p>
+                </div>
+
+                {{-- Komposisi dekoratif: stand QR, ponsel, dan kartu status --}}
+                <div class="qr-visual reveal" style="--reveal-delay: 200ms">
+                    <div class="qr-scene" data-qr-scene aria-hidden="true">
+                        <span class="qr-beacon"></span>
+                        <span class="qr-beam"></span>
+
+                        <div class="qr-layer qr-layer--stand" data-depth="0.35">
+                            <div class="qr-stand">
+                                <div class="qr-stand-card">
+                                    <div class="qr-stand-top">
+                                        <span class="qr-stand-brand">Ngoffe<span>.</span></span>
+                                        <span class="qr-stand-live"><i></i>Kamar</span>
+                                    </div>
+
+                                    <div class="qr-stand-code">
+                                        <svg viewBox="0 0 29 29" role="presentation" shape-rendering="crispEdges">
+                                            <rect width="29" height="29" fill="#ffffff"/>
+                                            <g fill="#0B3B2C">
+                                                <rect x="0" y="0" width="7" height="7"/>
+                                                <rect x="1" y="1" width="5" height="5" fill="#ffffff"/>
+                                                <rect x="2" y="2" width="3" height="3"/>
+                                                <rect x="22" y="0" width="7" height="7"/>
+                                                <rect x="23" y="1" width="5" height="5" fill="#ffffff"/>
+                                                <rect x="24" y="2" width="3" height="3"/>
+                                                <rect x="0" y="22" width="7" height="7"/>
+                                                <rect x="1" y="23" width="5" height="5" fill="#ffffff"/>
+                                                <rect x="2" y="24" width="3" height="3"/>
+                                                <path d="M9 0h1v1H9zM11 0h1v1h-1zM13 0h1v1h-1zM15 0h1v1h-1zM17 0h1v1h-1zM19 0h1v1h-1zM21 0h1v1h-1zM8 1h1v1H8zM10 1h1v1h-1zM12 1h1v1h-1zM14 1h1v1h-1zM16 1h1v1h-1zM18 1h1v1h-1zM9 2h1v1H9zM13 2h1v1h-1zM17 2h1v1h-1zM19 2h1v1h-1zM21 2h1v1h-1zM8 3h1v1H8zM11 3h1v1h-1zM14 3h1v1h-1zM16 3h1v1h-1zM18 3h1v1h-1zM20 3h1v1h-1zM9 4h1v1H9zM10 4h1v1h-1zM12 4h1v1h-1zM15 4h1v1h-1zM17 4h1v1h-1zM19 4h1v1h-1zM21 4h1v1h-1zM8 5h1v1H8zM13 5h1v1h-1zM16 5h1v1h-1zM18 5h1v1h-1zM20 5h1v1h-1zM9 6h1v1H9zM11 6h1v1h-1zM12 6h1v1h-1zM15 6h1v1h-1zM17 6h1v1h-1zM19 6h1v1h-1zM21 6h1v1h-1zM8 8h1v1H8zM12 8h1v1h-1zM15 8h1v1h-1zM18 8h1v1h-1zM21 8h1v1h-1zM24 8h1v1h-1zM26 8h1v1h-1zM9 9h1v1H9zM10 9h1v1h-1zM13 9h1v1h-1zM16 9h1v1h-1zM19 9h1v1h-1zM22 9h1v1h-1zM25 9h1v1h-1zM27 9h1v1h-1zM8 10h1v1H8zM11 10h1v1h-1zM14 10h1v1h-1zM17 10h1v1h-1zM20 10h1v1h-1zM23 10h1v1h-1zM26 10h1v1h-1zM28 10h1v1h-1zM9 11h1v1H9zM12 11h1v1h-1zM15 11h1v1h-1zM18 11h1v1h-1zM21 11h1v1h-1zM24 11h1v1h-1zM27 11h1v1h-1zM8 12h1v1H8zM10 12h1v1h-1zM13 12h1v1h-1zM16 12h1v1h-1zM19 12h1v1h-1zM22 12h1v1h-1zM25 12h1v1h-1zM28 12h1v1h-1zM9 13h1v1H9zM11 13h1v1h-1zM14 13h1v1h-1zM17 13h1v1h-1zM20 13h1v1h-1zM23 13h1v1h-1zM26 13h1v1h-1zM8 14h1v1H8zM12 14h1v1h-1zM15 14h1v1h-1zM18 14h1v1h-1zM21 14h1v1h-1zM24 14h1v1h-1zM27 14h1v1h-1zM9 15h1v1H9zM10 15h1v1h-1zM13 15h1v1h-1zM16 15h1v1h-1zM19 15h1v1h-1zM22 15h1v1h-1zM25 15h1v1h-1zM28 15h1v1h-1zM8 16h1v1H8zM11 16h1v1h-1zM14 16h1v1h-1zM17 16h1v1h-1zM20 16h1v1h-1zM23 16h1v1h-1zM26 16h1v1h-1zM9 17h1v1H9zM12 17h1v1h-1zM15 17h1v1h-1zM18 17h1v1h-1zM21 17h1v1h-1zM24 17h1v1h-1zM27 17h1v1h-1zM8 18h1v1H8zM10 18h1v1h-1zM13 18h1v1h-1zM16 18h1v1h-1zM19 18h1v1h-1zM22 18h1v1h-1zM25 18h1v1h-1zM28 18h1v1h-1zM9 19h1v1H9zM11 19h1v1h-1zM14 19h1v1h-1zM17 19h1v1h-1zM20 19h1v1h-1zM23 19h1v1h-1zM26 19h1v1h-1zM8 20h1v1H8zM12 20h1v1h-1zM15 20h1v1h-1zM18 20h1v1h-1zM21 20h1v1h-1zM24 20h1v1h-1zM27 20h1v1h-1zM9 21h1v1H9zM10 21h1v1h-1zM13 21h1v1h-1zM16 21h1v1h-1zM19 21h1v1h-1zM22 21h1v1h-1zM25 21h1v1h-1zM28 21h1v1h-1z"/>
+                                            </g>
+                                        </svg>
+                                    </div>
+
+                                    <p class="qr-stand-room"><span>Nomor kamar</span>101</p>
+                                    <p class="qr-stand-hint">Pindai untuk membuka menu</p>
+                                </div>
+
+                                <span class="qr-stand-pole"></span>
+                                <span class="qr-stand-foot"></span>
+                                <span class="qr-stand-shadow"></span>
+                            </div>
+                        </div>
+
+                        <div class="qr-layer qr-layer--phone" data-depth="0.6">
+                            <div class="qr-phone">
+                                <div class="qr-phone-shell">
+                                    <span class="qr-phone-notch"></span>
+                                    <div class="qr-phone-screen">
+                                        <div class="qr-phone-top">
+                                            <span class="qr-phone-brand">Ngoffe<span>.</span></span>
+                                            <span class="qr-phone-live"><i></i>Live</span>
+                                        </div>
+                                        <p class="qr-phone-kicker">Kamar 101</p>
+                                        <p class="qr-phone-title">Menu malam ini</p>
+
+                                        <div class="qr-menu-item">
+                                            <span class="qr-menu-thumb qr-menu-thumb--one"></span>
+                                            <span class="qr-menu-lines"><i></i><i></i></span>
+                                            <b>38k</b>
+                                        </div>
+                                        <div class="qr-menu-item">
+                                            <span class="qr-menu-thumb qr-menu-thumb--two"></span>
+                                            <span class="qr-menu-lines"><i></i><i></i></span>
+                                            <b>32k</b>
+                                        </div>
+                                        <div class="qr-menu-item">
+                                            <span class="qr-menu-thumb qr-menu-thumb--three"></span>
+                                            <span class="qr-menu-lines"><i></i><i></i></span>
+                                            <b>26k</b>
+                                        </div>
+
+                                        <div class="qr-cart-bar">
+                                            <span>2 item</span>
+                                            <b>Rp 70.000</b>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="qr-chip qr-chip--order" data-depth="0.85">
+                            <span class="qr-chip-dot"></span>
+                            <span><b>Pesanan masuk</b><small>Kamar 101 · 2 item</small></span>
+                        </div>
+                        <div class="qr-chip qr-chip--status" data-depth="0.95">
+                            <span class="qr-chip-dot qr-chip-dot--amber"></span>
+                            <span><b>Diproses dapur</b><small>Status diperbarui</small></span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -693,6 +872,7 @@
                 <p class="footer-title">Navigasi</p>
                 <a href="#beranda">Beranda</a>
                 <a href="#fitur">Fitur</a>
+                <a href="#kamar-qr">Kamar &amp; QR</a>
                 <a href="#tentang">Tentang</a>
                 <a href="#cara-kerja">Cara Kerja</a>
                 <a href="#preview">Pratinjau</a>

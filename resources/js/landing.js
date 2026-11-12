@@ -134,7 +134,7 @@ if (navToggle && primaryNav) {
     });
 
     window.addEventListener('resize', () => {
-        if (window.innerWidth > 960 && primaryNav.classList.contains('is-open')) {
+        if (window.innerWidth > 1040 && primaryNav.classList.contains('is-open')) {
             setMenu(false);
         }
     });
@@ -289,13 +289,20 @@ faqButtons.forEach((button) => {
 });
 
 /* --------------------------------------------------------------------------
-   Parallax ringan + tilt pada ilustrasi hero
+   Parallax ringan + tilt pada ilustrasi (hero & Kamar & QR)
    -------------------------------------------------------------------------- */
-const scene = doc.querySelector('[data-parallax-scene]');
 const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
 
-if (scene && finePointer.matches && !reduceMotion.matches) {
-    const layers = scene.querySelectorAll('.scene-layer');
+function initParallaxScene(scene, layerSelector) {
+    if (!scene || !finePointer.matches || reduceMotion.matches) {
+        return;
+    }
+
+    const layers = scene.querySelectorAll(layerSelector);
+
+    if (layers.length === 0) {
+        return;
+    }
 
     scene.addEventListener(
         'pointermove',
@@ -323,3 +330,11 @@ if (scene && finePointer.matches && !reduceMotion.matches) {
         });
     });
 }
+
+doc.querySelectorAll('[data-parallax-scene]').forEach((scene) => {
+    initParallaxScene(scene, '.scene-layer');
+});
+
+doc.querySelectorAll('[data-qr-scene]').forEach((scene) => {
+    initParallaxScene(scene, '[data-depth]');
+});

@@ -32,6 +32,20 @@
     --ngofee-green-bg: #ECFDF5;
     --ngofee-green-dark: #14532D;
     --ngofee-green-border: #A7F3D0;
+
+    /* Palet Workspace (selaras landing page) */
+    --ws-green: #174C3B;
+    --ws-green-dark: #102F27;
+    --ws-green-medium: #2F765B;
+    --ws-mint: #BCEBD0;
+    --ws-lime: #D5F58A;
+    --ws-bg: #F5F8F6;
+    --ws-surface: #FFFFFF;
+    --ws-text: #17221D;
+    --ws-muted: #718078;
+    --ws-border: #E1EAE4;
+    --ws-warning: #E7A83E;
+    --ws-danger: #D95C5C;
 }
 
 [x-cloak] {
@@ -65,6 +79,10 @@
    Kartu statistik yang benar-benar bisa diklik
    -------------------------------------------------------------------------- */
 .stat-card {
+    position: relative;
+    box-shadow:
+        0 1px 0 rgba(23, 34, 29, 0.03),
+        0 14px 28px -26px rgba(23, 76, 59, 0.45);
     transition:
         transform 200ms ease,
         box-shadow 200ms ease,
@@ -72,11 +90,37 @@
         background-color 200ms ease;
 }
 
+.stat-card-arrow {
+    transition:
+        transform 200ms ease,
+        background-color 200ms ease;
+}
+
+@keyframes stat-arrow-nudge {
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+    50% {
+        transform: translateX(3px);
+    }
+}
+
 @media (hover: hover) {
     .stat-card:hover {
-        transform: translateY(-3px);
+        transform: translateY(-4px);
         border-color: var(--ngofee-green-border);
-        box-shadow: 0 10px 24px rgba(15, 118, 110, 0.12);
+        box-shadow:
+            0 2px 0 rgba(23, 34, 29, 0.03),
+            0 22px 40px -22px rgba(23, 76, 59, 0.35);
+    }
+
+    .stat-card:hover .stat-card-arrow {
+        transform: translateX(3px);
+    }
+
+    .stat-card:hover .stat-card-arrow span {
+        animation: stat-arrow-nudge 700ms ease-in-out;
     }
 }
 
@@ -338,6 +382,806 @@
 
 .toast-leave {
     animation: toast-out 180ms ease-in both;
+}
+
+/* --------------------------------------------------------------------------
+   Workspace hero — komposisi 3D dekoratif
+   -------------------------------------------------------------------------- */
+.workspace-hero {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    border-radius: 28px;
+    padding: clamp(24px, 4vw, 42px);
+    color: #EAF7F0;
+    background:
+        radial-gradient(90% 120% at 85% 6%, rgba(213, 245, 138, 0.16), transparent 58%),
+        radial-gradient(80% 100% at 0% 100%, rgba(47, 118, 91, 0.55), transparent 62%),
+        linear-gradient(152deg, #0B2820 0%, #102F27 44%, #174C3B 100%);
+    box-shadow:
+        0 30px 60px -38px rgba(16, 47, 39, 0.8),
+        inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+.workspace-hero-bg {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+}
+
+.workspace-glow {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+}
+
+.workspace-glow--one {
+    width: 380px;
+    height: 380px;
+    top: -160px;
+    right: -100px;
+    background: rgba(213, 245, 138, 0.16);
+}
+
+.workspace-glow--two {
+    width: 320px;
+    height: 320px;
+    bottom: -180px;
+    left: -80px;
+    background: rgba(47, 118, 91, 0.45);
+}
+
+.workspace-mesh {
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(188, 235, 208, 0.055) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(188, 235, 208, 0.055) 1px, transparent 1px);
+    background-size: 58px 58px;
+    mask-image: radial-gradient(85% 80% at 70% 40%, #000 0%, transparent 78%);
+    -webkit-mask-image: radial-gradient(85% 80% at 70% 40%, #000 0%, transparent 78%);
+}
+
+.workspace-hero-grid {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+    align-items: center;
+    gap: clamp(28px, 4vw, 52px);
+}
+
+.workspace-copy {
+    position: relative;
+    z-index: 2;
+    min-width: 0;
+}
+
+.workspace-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--ws-mint);
+}
+
+.workspace-eyebrow-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--ws-lime);
+    box-shadow: 0 0 0 4px rgba(213, 245, 138, 0.14);
+}
+
+.workspace-title {
+    margin-top: 16px;
+    max-width: 17ch;
+    font-family: var(--font-sans);
+    font-size: clamp(1.9rem, 3.2vw, 2.7rem);
+    font-weight: 700;
+    line-height: 1.12;
+    letter-spacing: -0.035em;
+    color: #F4FBF7;
+}
+
+.workspace-lead {
+    margin-top: 16px;
+    max-width: 47ch;
+    font-size: clamp(0.94rem, 1.2vw, 1.02rem);
+    line-height: 1.7;
+    color: rgba(234, 247, 240, 0.72);
+}
+
+.workspace-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 26px;
+}
+
+.workspace-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border-radius: 12px;
+    border: 1px solid transparent;
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.1;
+    transition:
+        transform 180ms ease,
+        background-color 180ms ease,
+        border-color 180ms ease,
+        color 180ms ease,
+        box-shadow 180ms ease;
+}
+
+.workspace-btn-icon {
+    width: 16px;
+    height: 16px;
+    flex: none;
+}
+
+.workspace-btn--primary {
+    background: var(--ws-lime);
+    color: var(--ws-green-dark);
+    box-shadow: 0 10px 22px -14px rgba(213, 245, 138, 0.8);
+}
+
+.workspace-btn--primary:hover {
+    background: #E4FFA6;
+    transform: translateY(-1px);
+    box-shadow: 0 14px 26px -14px rgba(213, 245, 138, 0.9);
+}
+
+.workspace-btn--ghost {
+    border-color: rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.06);
+    color: #EAF7F0;
+}
+
+.workspace-btn--ghost:hover {
+    border-color: rgba(188, 235, 208, 0.5);
+    background: rgba(255, 255, 255, 0.12);
+    transform: translateY(-1px);
+}
+
+.workspace-btn--utility {
+    border-color: rgba(255, 255, 255, 0.12);
+    background: transparent;
+    color: rgba(234, 247, 240, 0.82);
+}
+
+.workspace-btn:active {
+    transform: scale(0.98);
+}
+
+@keyframes ws-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.workspace-btn:disabled .workspace-btn-icon--spin {
+    animation: ws-spin 900ms linear infinite;
+}
+
+.workspace-footnote {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px 18px;
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 0.78rem;
+    color: rgba(234, 247, 240, 0.62);
+}
+
+.workspace-welcome b {
+    color: var(--ws-mint);
+    font-weight: 600;
+}
+
+.workspace-shortcut {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--ws-lime);
+    font-weight: 600;
+    transition: color 180ms ease, transform 180ms ease;
+}
+
+.workspace-shortcut svg {
+    width: 15px;
+    height: 15px;
+    flex: none;
+}
+
+.workspace-shortcut:hover {
+    color: #E9FFB0;
+    transform: translateX(2px);
+}
+
+.workspace-shortcut:focus-visible {
+    outline: 2px solid var(--ws-lime);
+    outline-offset: 4px;
+    border-radius: 6px;
+}
+
+/* Komposisi visual */
+.workspace-visual {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    min-width: 0;
+}
+
+.workspace-scene {
+    position: relative;
+    width: 100%;
+    max-width: 430px;
+    min-height: 390px;
+    perspective: 1100px;
+    transform-style: preserve-3d;
+}
+
+.workspace-halo {
+    position: absolute;
+    left: 58%;
+    top: 50%;
+    width: 320px;
+    height: 320px;
+    margin: -160px 0 0 -160px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(213, 245, 138, 0.22), rgba(47, 118, 91, 0.16) 46%, transparent 70%);
+    filter: blur(30px);
+    animation: wsHalo 9s ease-in-out infinite;
+}
+
+.workspace-ring {
+    position: absolute;
+    left: 58%;
+    top: 58%;
+    width: 268px;
+    height: 268px;
+    margin: -134px 0 0 -134px;
+    border: 1px solid rgba(188, 235, 208, 0.16);
+    border-radius: 50%;
+    transform: rotateX(64deg);
+    box-shadow: inset 0 0 40px rgba(213, 245, 138, 0.06);
+}
+
+.ws-pos {
+    position: absolute;
+    inset: 0 0 0 22%;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    transform-style: preserve-3d;
+    transition: transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: transform;
+}
+
+.ws-pos-frame {
+    position: relative;
+    width: min(100%, 196px);
+    aspect-ratio: 0.56;
+    padding: 8px;
+    border-radius: 26px;
+    background: linear-gradient(150deg, #041A14, #154238 55%, #08251D);
+    border: 1px solid rgba(188, 235, 208, 0.24);
+    box-shadow:
+        0 40px 70px -30px rgba(0, 0, 0, 0.85),
+        inset 0 1px 0 rgba(255, 255, 255, 0.14);
+    transform-style: preserve-3d;
+    animation: wsFloatMain 6.4s ease-in-out infinite;
+}
+
+.ws-pos-camera {
+    position: absolute;
+    top: 13px;
+    left: 50%;
+    width: 42px;
+    height: 4px;
+    margin-left: -21px;
+    border-radius: 999px;
+    background: rgba(188, 235, 208, 0.26);
+    z-index: 2;
+}
+
+.ws-pos-shine {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    border-radius: 26px;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.ws-pos-shine::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(118deg, transparent 32%, rgba(255, 255, 255, 0.16) 48%, transparent 62%);
+    transform: translateX(-140%);
+    animation: wsShine 7.4s ease-in-out infinite;
+}
+
+.ws-pos-screen {
+    position: absolute;
+    inset: 8px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 18px 12px 11px;
+    border-radius: 19px;
+    background: linear-gradient(180deg, #FBFDFB 0%, #F1F8F4 100%);
+    color: var(--ws-text);
+}
+
+.ws-pos-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.ws-pos-brand {
+    font-family: var(--font-sans);
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--ws-green-dark);
+}
+
+.ws-pos-brand span {
+    color: var(--ngofee-green);
+}
+
+.ws-pos-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.5rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ws-green);
+}
+
+.ws-pos-tag i {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--ngofee-green);
+    box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
+}
+
+.ws-pos-kicker {
+    margin-top: 14px;
+    font-size: 0.54rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ws-muted);
+}
+
+.ws-pos-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 7px;
+    padding-bottom: 6px;
+    border-bottom: 1px dashed rgba(23, 76, 59, 0.12);
+    font-size: 0.6rem;
+    color: var(--ws-muted);
+}
+
+.ws-pos-row b {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--ws-green);
+    font-variant-numeric: tabular-nums;
+}
+
+.ws-pos-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    height: 52px;
+    margin-top: 10px;
+}
+
+.ws-pos-bars i {
+    flex: 1;
+    height: var(--h, 50%);
+    border-radius: 3px 3px 1px 1px;
+    background: linear-gradient(180deg, var(--ngofee-mint), var(--ngofee-green));
+    opacity: 0.9;
+}
+
+.ws-pos-bars i:nth-child(3n) {
+    background: linear-gradient(180deg, var(--ws-lime), var(--ws-green-medium));
+}
+
+.ws-pos-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: auto;
+    padding: 7px 9px;
+    border-radius: 8px;
+    background: var(--ws-green-dark);
+    font-size: 0.55rem;
+    font-weight: 600;
+    color: rgba(234, 247, 240, 0.82);
+}
+
+.ws-pos-footer b {
+    font-size: 0.64rem;
+    color: var(--ws-lime);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Kartu status mengambang */
+.ws-float {
+    position: absolute;
+    z-index: 4;
+    transition: transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: transform;
+}
+
+.ws-float--orders {
+    top: 5%;
+    left: 0;
+}
+
+.ws-float--kitchen {
+    top: 25%;
+    right: 0;
+}
+
+.ws-float--payment {
+    bottom: 5%;
+    right: 1%;
+}
+
+.ws-float-inner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 11px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.75);
+    background: rgba(250, 253, 251, 0.97);
+    color: var(--ws-text);
+    box-shadow:
+        0 20px 34px -20px rgba(0, 0, 0, 0.7),
+        0 1px 0 rgba(255, 255, 255, 0.9) inset;
+    animation: wsFloatChip 6s ease-in-out infinite;
+}
+
+.ws-float--kitchen .ws-float-inner {
+    animation-duration: 6.8s;
+    animation-delay: -1.6s;
+}
+
+.ws-float--payment .ws-float-inner {
+    animation-duration: 5.6s;
+    animation-delay: -3s;
+}
+
+.ws-float-icon {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    background: #ECFDF5;
+    color: var(--ngofee-green);
+}
+
+.ws-float-icon svg {
+    width: 15px;
+    height: 15px;
+}
+
+.ws-float-icon--amber {
+    background: #FDF3E3;
+    color: #B45309;
+}
+
+.ws-float small {
+    display: block;
+    font-size: 0.52rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    line-height: 1.2;
+    color: var(--ws-muted);
+}
+
+.ws-float b {
+    display: block;
+    margin-top: 1px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    line-height: 1.25;
+    color: var(--ws-green-dark);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Cangkir kopi dekoratif */
+.ws-coffee {
+    position: absolute;
+    left: 1%;
+    bottom: 3%;
+    z-index: 4;
+    width: 96px;
+    height: 96px;
+    transition: transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: transform;
+}
+
+.ws-coffee-cup {
+    position: absolute;
+    left: 16%;
+    bottom: 18%;
+    width: 54%;
+    height: 46%;
+    border-radius: 8% 8% 34% 34%;
+    background: linear-gradient(155deg, #F8FCF9, #D9EADF 62%, #C3DACB);
+    box-shadow:
+        inset -7px -6px 0 rgba(23, 76, 59, 0.09),
+        0 18px 26px -16px rgba(0, 0, 0, 0.8);
+    animation: wsCoffeeFloat 6.8s ease-in-out infinite;
+}
+
+.ws-coffee-cup::after {
+    content: '';
+    position: absolute;
+    left: 12%;
+    right: 12%;
+    top: 10%;
+    height: 14%;
+    border-radius: 50%;
+    background: linear-gradient(180deg, #6B4A34, #3C271B);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.ws-coffee-handle {
+    position: absolute;
+    left: 64%;
+    bottom: 26%;
+    width: 22%;
+    height: 26%;
+    border: 4px solid #DCEBE1;
+    border-left-width: 0;
+    border-radius: 0 50% 50% 0;
+    box-shadow: 2px 2px 0 rgba(23, 76, 59, 0.06);
+}
+
+.ws-coffee-saucer {
+    position: absolute;
+    left: 4%;
+    bottom: 6%;
+    width: 84%;
+    height: 22%;
+    border-radius: 50%;
+    background: radial-gradient(60% 70% at 50% 40%, #F8FCF9, #CADED2 74%);
+    box-shadow: 0 16px 24px -14px rgba(0, 0, 0, 0.65);
+}
+
+.ws-coffee-steam {
+    position: absolute;
+    left: 31%;
+    bottom: 62%;
+    width: 7%;
+    height: 26%;
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.5));
+    filter: blur(1px);
+    animation: wsSteam 4.6s ease-in-out infinite;
+}
+
+.ws-coffee-steam--two {
+    left: 51%;
+    bottom: 64%;
+    height: 22%;
+    animation-delay: -2.1s;
+}
+
+@keyframes wsFloatMain {
+    0%,
+    100% {
+        transform: translateY(0) rotateY(-9deg) rotateX(4deg);
+    }
+    50% {
+        transform: translateY(-9px) rotateY(-9deg) rotateX(4deg);
+    }
+}
+
+@keyframes wsFloatChip {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-6px);
+    }
+}
+
+@keyframes wsHalo {
+    0%,
+    100% {
+        opacity: 0.7;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.95;
+        transform: scale(1.05);
+    }
+}
+
+@keyframes wsShine {
+    0%,
+    55% {
+        transform: translateX(-140%);
+    }
+    80%,
+    100% {
+        transform: translateX(160%);
+    }
+}
+
+@keyframes wsCoffeeFloat {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-4px);
+    }
+}
+
+@keyframes wsSteam {
+    0%,
+    100% {
+        opacity: 0;
+        transform: translateY(4px) scaleY(0.8);
+    }
+    35% {
+        opacity: 0.7;
+    }
+    70% {
+        opacity: 0;
+        transform: translateY(-8px) scaleY(1.1);
+    }
+}
+
+@media (min-width: 1181px) and (max-width: 1300px) {
+    .ws-pos {
+        inset: 0 0 0 2%;
+    }
+
+    .ws-pos-frame {
+        width: 180px;
+    }
+}
+
+@media (max-width: 1180px) {
+    .workspace-hero-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 34px;
+    }
+
+    .workspace-copy {
+        max-width: 640px;
+    }
+
+    .workspace-scene {
+        max-width: 430px;
+        min-height: 360px;
+        margin-inline: auto;
+    }
+}
+
+@media (max-width: 640px) {
+    .workspace-hero {
+        border-radius: 22px;
+        padding: 22px 18px 26px;
+    }
+
+    .workspace-title {
+        font-size: clamp(1.7rem, 8vw, 2.05rem);
+    }
+
+    .workspace-actions .workspace-btn {
+        flex: 1 1 100%;
+    }
+
+    .workspace-footnote {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .workspace-scene {
+        max-width: 340px;
+        min-height: 330px;
+    }
+
+    .ws-pos {
+        inset: 0 0 0 8%;
+    }
+
+    .ws-pos-frame {
+        width: 150px;
+    }
+
+    .ws-pos-screen {
+        padding: 15px 10px 9px;
+    }
+
+    .ws-pos-kicker {
+        margin-top: 10px;
+    }
+
+    .ws-pos-bars {
+        height: 40px;
+    }
+
+    .ws-float-inner {
+        gap: 6px;
+        padding: 6px 8px;
+    }
+
+    .ws-float-icon {
+        display: none;
+    }
+
+    .ws-float small {
+        font-size: 0.48rem;
+    }
+
+    .ws-float b {
+        font-size: 0.62rem;
+    }
+
+    .ws-float--orders {
+        top: 2%;
+        left: 0;
+    }
+
+    .ws-float--kitchen {
+        top: 27%;
+        right: 0;
+    }
+
+    .ws-float--payment {
+        bottom: 2%;
+        right: 0;
+    }
+
+    .ws-coffee {
+        width: 76px;
+        height: 76px;
+    }
+
+    .workspace-ring {
+        width: 220px;
+        height: 220px;
+        margin: -110px 0 0 -110px;
+    }
 }
 
 /* --------------------------------------------------------------------------

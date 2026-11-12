@@ -150,7 +150,14 @@
                                         <span class="mt-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-md bg-slate-100 px-1 text-xs font-bold text-slate-700">
                                             {{ $item->quantity }}x
                                         </span>
-                                        <span class="text-slate-700">{{ $item->product_name }}</span>
+                                        <span class="text-slate-700">
+                                            {{ $item->product_name }}
+                                            @if ($item->notes)
+                                                <span class="mt-0.5 block text-xs font-normal text-amber-700">
+                                                    Catatan: {{ $item->notes }}
+                                                </span>
+                                            @endif
+                                        </span>
                                     </div>
                                     <span class="shrink-0 tabular-nums text-slate-500">
                                         Rp {{ number_format((float) $item->subtotal, 0, ',', '.') }}

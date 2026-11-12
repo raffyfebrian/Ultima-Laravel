@@ -10,6 +10,8 @@ class Order extends Model
 {
     protected $fillable = [
         'order_number',
+        'public_token',
+        'idempotency_key',
         'room_id',
         'order_status',
         'payment_status',
@@ -72,5 +74,45 @@ class Order extends Model
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    /**
+     * Tahapan status publik. Urutan mengikuti alur dapur yang sudah ada.
+     */
+    public function getStatusStepsAttribute(): array
+    {
+        $steps = [
+            ['key' => 'received', 'label' => 'Diterima', 'hint' => 'Pesanan masuk ke kasir'],
+            ['key' => 'processing', 'label' => 'Diproses', 'hint' => 'Dapur menyiapkan pesanan'],
+            ['key' => 'ready', 'label' => 'Siap', 'hint' => 'Pesanan siap diantar'],
+            ['key' => 'completed', 'label' => 'Selesai', 'hint' => 'Pesanan selesai'],
+        ];
+
+        $current = match ($this->order_status) {
+            'pending', 'confirmed' => 0,
+            'preparing' => 1,
+            'ready' => 2,
+            'completed' => 3,
+            default => -1,
+        };
+
+        return array_map(function (array $step, int $index) use ($current) {
+            $step['state'] = $current === -1
+                ? 'cancelled'
+                : ($index < $current ? 'done' : ($index === $current ? 'current' : 'upcoming'));
+
+            return $step;
+        }, $steps, array_keys($steps));
+    }
+
+    public function getStatusStepIndexAttribute(): int
+    {
+        return match ($this->order_status) {
+            'pending', 'confirmed' => 0,
+            'preparing' => 1,
+            'ready' => 2,
+            'completed' => 3,
+            default => -1,
+        };
     }
 }

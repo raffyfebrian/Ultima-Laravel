@@ -79,6 +79,21 @@ new class extends Component
         return Order::whereIn('order_status', ['pending', 'confirmed', 'preparing', 'ready'])->count();
     }
 
+    public function getTodayOrdersProperty(): int
+    {
+        return Order::whereDate('placed_at', today())->count();
+    }
+
+    public function getKitchenQueueProperty(): int
+    {
+        return Order::whereIn('order_status', ['pending', 'confirmed', 'preparing', 'ready'])->count();
+    }
+
+    public function getUnpaidCountProperty(): int
+    {
+        return Order::where('payment_status', 'unpaid')->count();
+    }
+
     public function getRecentOrdersProperty()
     {
         return Order::with(['room', 'items'])
@@ -122,7 +137,7 @@ new class extends Component
 }
 ?>
 
-<div class="min-h-screen bg-[#f8fafc] text-[#252525]">
+<div class="min-h-screen bg-[#F5F8F6] text-[#17221D]">
     <div class="flex min-h-screen">
         {{-- Sidebar --}}
         <x-dashboard.sidebar />
@@ -192,56 +207,186 @@ new class extends Component
                 {{-- Skeleton halus saat data dashboard dimuat ulang --}}
                 <div wire:loading.delay class="skeleton h-1.5 w-full rounded-full" aria-hidden="true"></div>
 
-                {{-- Hero --}}
-                <div class="dashboard-enter relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-teal-900 p-6 text-white shadow-2xl shadow-teal-900/20 md:p-8">
-                    <div class="absolute -right-16 -top-20 h-64 w-64 rounded-full bg-teal-400/20 blur-3xl"></div>
-                    <div class="absolute -bottom-24 left-1/4 h-64 w-64 rounded-full bg-emerald-400/10 blur-3xl"></div>
-                    <div class="absolute inset-x-8 bottom-0 h-px bg-gradient-to-r from-transparent via-ngofee-mint/40 to-transparent"></div>
+                {{-- Workspace hero --}}
+                <section class="workspace-hero dashboard-enter" data-workspace-scene aria-labelledby="workspace-hero-title">
+                    <div class="workspace-hero-bg" aria-hidden="true">
+                        <span class="workspace-glow workspace-glow--one"></span>
+                        <span class="workspace-glow workspace-glow--two"></span>
+                        <span class="workspace-mesh"></span>
+                    </div>
 
-                    <div class="relative flex flex-wrap items-end justify-between gap-6">
-                        <div>
-                            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-300">
-                                Selamat datang kembali,
+                    <div class="workspace-hero-grid">
+                        <div class="workspace-copy">
+                            <p class="workspace-eyebrow">
+                                <span class="workspace-eyebrow-dot" aria-hidden="true"></span>
+                                WORKSPACE OVERVIEW
                             </p>
-                            <h1 class="mt-2 text-3xl font-bold tracking-tight md:text-4xl">
-                                {{ $this->userName }}.
+
+                            <h1 class="workspace-title" id="workspace-hero-title">
+                                Semua operasional,<br class="workspace-title-break"> dalam satu kendali.
                             </h1>
-                            <p class="mt-3 max-w-xl text-sm leading-7 text-slate-300">
-                                Ringkasan operasional Ngoffe ID hari ini. Pantau pesanan, pembayaran,
-                                dan antrian dapur dari satu tempat.
+
+                            <p class="workspace-lead">
+                                Pantau pesanan, pembayaran, antrean dapur, dan performa kafe dari satu workspace.
                             </p>
+
+                            <div class="workspace-actions">
+                                @if (in_array($this->userRole, ['superadmin', 'admin', 'cashier'], true))
+                                    <a href="{{ route('admin.cashier.index') }}"
+                                       class="workspace-btn workspace-btn--primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
+                                        Buka Kasir
+                                        <svg class="workspace-btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 12h16M13 5l7 7-7 7" />
+                                        </svg>
+                                    </a>
+                                @endif
+
+                                @if (in_array($this->userRole, ['superadmin', 'admin', 'kitchen'], true))
+                                    <a href="{{ route('admin.kitchen.index') }}"
+                                       class="workspace-btn workspace-btn--ghost focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
+                                        Lihat Dapur
+                                    </a>
+                                @endif
+
+                                <button type="button"
+                                        wire:click="$refresh"
+                                        wire:loading.attr="disabled"
+                                        class="workspace-btn workspace-btn--ghost workspace-btn--utility disabled:cursor-wait disabled:opacity-70">
+                                    <svg class="workspace-btn-icon workspace-btn-icon--spin" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                    </svg>
+                                    <span wire:loading.remove>Muat Ulang</span>
+                                    <span wire:loading>Memuat...</span>
+                                </button>
+                            </div>
+
+                            <div class="workspace-footnote">
+                                <p class="workspace-welcome">
+                                    Masuk sebagai <b>{{ $this->userName }}</b>
+                                    <span aria-hidden="true">·</span>
+                                    {{ ucfirst(str_replace('_', ' ', $this->userRole)) }}
+                                </p>
+
+                                @if (in_array($this->userRole, ['superadmin', 'admin'], true))
+                                    <a href="{{ route('admin.rooms.index') }}" class="workspace-shortcut">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                            <rect x="3" y="3" width="7" height="7" rx="1.5" stroke-width="1.7" />
+                                            <rect x="14" y="3" width="7" height="7" rx="1.5" stroke-width="1.7" />
+                                            <rect x="3" y="14" width="7" height="7" rx="1.5" stroke-width="1.7" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M14 14h3v3h-3zM20 14v3M14 20h3M20 20h1" />
+                                        </svg>
+                                        Kelola Kamar &amp; QR
+                                    </a>
+                                @endif
+                            </div>
                         </div>
 
-                        <div class="flex flex-wrap gap-2">
-                            @if (in_array($this->userRole, ['superadmin', 'admin', 'cashier'], true))
-                                <a href="{{ route('admin.cashier.index') }}"
-                                   class="action-button rounded-xl px-5 py-2.5 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
-                                    Buka Kasir
-                                </a>
-                            @endif
-                            @if (in_array($this->userRole, ['superadmin', 'admin', 'kitchen'], true))
-                                <a href="{{ route('admin.kitchen.index') }}"
-                                   class="pressable rounded-xl border border-white/20 bg-white/10 px-5 py-2.5 text-sm font-semibold text-white backdrop-blur hover:bg-white/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
-                                    Lihat Dapur
-                                </a>
-                            @endif
-                            <button type="button"
-                                    wire:click="$refresh"
-                                    wire:loading.attr="disabled"
-                                    class="pressable inline-flex items-center gap-2 rounded-xl border border-white/15 px-5 py-2.5 text-sm font-semibold text-white/90 hover:border-ngofee-mint/50 hover:bg-white/10 disabled:cursor-wait disabled:opacity-70">
-                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                </svg>
-                                <span wire:loading.remove>Muat Ulang</span>
-                                <span wire:loading>Memuat...</span>
-                            </button>
+                        {{-- Komposisi 3D dekoratif, nilai tetap berasal dari backend --}}
+                        <div class="workspace-visual" aria-hidden="true">
+                            <div class="workspace-scene">
+                                <span class="workspace-halo"></span>
+                                <span class="workspace-ring"></span>
+
+                                <div class="ws-pos" data-depth="0.45">
+                                    <div class="ws-pos-frame">
+                                        <span class="ws-pos-camera"></span>
+                                        <span class="ws-pos-shine"></span>
+
+                                        <div class="ws-pos-screen">
+                                            <div class="ws-pos-top">
+                                                <span class="ws-pos-brand">Ngoffe<span>.</span></span>
+                                                <span class="ws-pos-tag"><i></i>POS</span>
+                                            </div>
+
+                                            <p class="ws-pos-kicker">Ringkasan hari ini</p>
+                                            <div class="ws-pos-row">
+                                                <span>Pesanan masuk</span>
+                                                <b>{{ number_format($this->todayOrders, 0, ',', '.') }}</b>
+                                            </div>
+                                            <div class="ws-pos-row">
+                                                <span>Antrean dapur</span>
+                                                <b>{{ number_format($this->kitchenQueue, 0, ',', '.') }}</b>
+                                            </div>
+
+                                            <div class="ws-pos-bars">
+                                                <i style="--h: 42%"></i>
+                                                <i style="--h: 64%"></i>
+                                                <i style="--h: 52%"></i>
+                                                <i style="--h: 82%"></i>
+                                                <i style="--h: 70%"></i>
+                                                <i style="--h: 94%"></i>
+                                            </div>
+
+                                            <div class="ws-pos-footer">
+                                                <span>Menunggu bayar</span>
+                                                <b>{{ number_format($this->unpaidCount, 0, ',', '.') }}</b>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <span class="ws-pos-neck"></span>
+                                    <span class="ws-pos-base"></span>
+                                </div>
+
+                                <div class="ws-float ws-float--orders" data-depth="0.85">
+                                    <div class="ws-float-inner">
+                                        <span class="ws-float-icon">
+                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 4h14v16l-3-2-2 2-2-2-2 2-3-2V4Z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 8h6M9 12h4" />
+                                            </svg>
+                                        </span>
+                                        <span>
+                                            <small>Pesanan baru</small>
+                                            <b>{{ number_format($this->todayOrders, 0, ',', '.') }} hari ini</b>
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="ws-float ws-float--kitchen" data-depth="1">
+                                    <div class="ws-float-inner">
+                                        <span class="ws-float-icon ws-float-icon--amber">
+                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3c1.6 2.2 1.2 3.8-.2 5.2-1.8 1.8-2 4.3-.4 6.3 1 1.2 2.5 1.5 3.9 1.2 1.2-.2 2.2-1 2.9-2 .9 1.2 1.3 2.6 1.3 3.8A7.5 7.5 0 0 1 12 21a7.5 7.5 0 0 1-7.5-7.5C4.5 9.4 8.1 6.3 12 3Z" />
+                                            </svg>
+                                        </span>
+                                        <span>
+                                            <small>Dapur aktif</small>
+                                            <b>{{ number_format($this->kitchenQueue, 0, ',', '.') }} antrean</b>
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="ws-float ws-float--payment" data-depth="0.7">
+                                    <div class="ws-float-inner">
+                                        <span class="ws-float-icon">
+                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 8.5A2.5 2.5 0 0 1 5.5 6h13A2.5 2.5 0 0 1 21 8.5v7A2.5 2.5 0 0 1 18.5 18h-13A2.5 2.5 0 0 1 3 15.5v-7Z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 10h18M7 14h4" />
+                                            </svg>
+                                        </span>
+                                        <span>
+                                            <small>Pembayaran</small>
+                                            <b>{{ number_format($this->unpaidCount, 0, ',', '.') }} menunggu</b>
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="ws-coffee" data-depth="0.6">
+                                    <span class="ws-coffee-steam"></span>
+                                    <span class="ws-coffee-steam ws-coffee-steam--two"></span>
+                                    <span class="ws-coffee-cup"></span>
+                                    <span class="ws-coffee-handle"></span>
+                                    <span class="ws-coffee-saucer"></span>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
+                </section>
 
                 {{-- Revenue Highlight --}}
                 <div class="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-                    <div class="reveal rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50 p-6 shadow-sm" style="--reveal-delay: 60ms">
+                    <div class="stat-card reveal rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50 p-6 shadow-sm" style="--reveal-delay: 60ms">
                         <p class="text-xs font-semibold uppercase tracking-wider text-emerald-700">Pendapatan Hari Ini</p>
                         <p class="mt-2 text-3xl font-bold text-emerald-900">
                             <span wire:loading.remove
@@ -252,7 +397,7 @@ new class extends Component
                         </p>
                         <p class="mt-1 text-xs text-emerald-700">Pembayaran lunas hari ini</p>
                     </div>
-                    <div class="reveal rounded-2xl border border-slate-200 bg-white p-6 shadow-sm" style="--reveal-delay: 120ms">
+                    <div class="stat-card reveal rounded-2xl border border-slate-200 bg-white p-6 shadow-sm" style="--reveal-delay: 120ms">
                         <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Pendapatan</p>
                         <p class="mt-2 text-3xl font-bold text-slate-900">
                             <span wire:loading.remove
@@ -263,7 +408,7 @@ new class extends Component
                         </p>
                         <p class="mt-1 text-xs text-slate-500">Akumulasi seluruh pembayaran lunas</p>
                     </div>
-                    <div class="reveal rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 p-6 shadow-sm" style="--reveal-delay: 180ms">
+                    <div class="stat-card reveal rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 p-6 shadow-sm" style="--reveal-delay: 180ms">
                         <p class="text-xs font-semibold uppercase tracking-wider text-amber-700">Pesanan Aktif</p>
                         <p class="mt-2 text-3xl font-bold text-amber-900">
                             <span wire:loading.remove
@@ -290,7 +435,7 @@ new class extends Component
                                         {{ $stat['description'] }}
                                     </p>
                                 </div>
-                                <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-ngofee-bg transition-colors group-hover:bg-ngofee-soft">
+                                <div class="stat-card-arrow flex h-10 w-10 items-center justify-center rounded-xl bg-ngofee-bg transition-colors group-hover:bg-ngofee-soft">
                                     <span class="text-lg text-ngofee transition-colors group-hover:text-ngofee-dark">&rarr;</span>
                                 </div>
                             </div>

@@ -137,6 +137,54 @@ function scanOrderRows() {
     orderRowsReady = true;
 }
 
+const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
+
+function initWorkspaceParallax(root = document) {
+    if (!finePointer.matches || reduceMotion.matches) {
+        return;
+    }
+
+    root.querySelectorAll('[data-workspace-scene]').forEach((scene) => {
+        if (scene.dataset.parallaxReady === 'true') {
+            return;
+        }
+
+        const layers = scene.querySelectorAll('[data-depth]');
+
+        if (!layers.length) {
+            return;
+        }
+
+        scene.dataset.parallaxReady = 'true';
+
+        scene.addEventListener(
+            'pointermove',
+            (event) => {
+                const rect = scene.getBoundingClientRect();
+                const pointerX = (event.clientX - rect.left) / rect.width - 0.5;
+                const pointerY = (event.clientY - rect.top) / rect.height - 0.5;
+
+                layers.forEach((layer) => {
+                    const depth = Number.parseFloat(layer.dataset.depth ?? '0');
+                    const shiftX = (-pointerX * depth * 10).toFixed(2);
+                    const shiftY = (-pointerY * depth * 8).toFixed(2);
+                    const tiltX = (-pointerY * depth * 1.6).toFixed(2);
+                    const tiltY = (pointerX * depth * 2).toFixed(2);
+
+                    layer.style.transform = `translate3d(${shiftX}px, ${shiftY}px, 0) rotateX(${tiltX}deg) rotateY(${tiltY}deg)`;
+                });
+            },
+            { passive: true },
+        );
+
+        scene.addEventListener('pointerleave', () => {
+            layers.forEach((layer) => {
+                layer.style.transform = '';
+            });
+        });
+    });
+}
+
 function scheduleScan() {
     if (scanScheduled) {
         return;
@@ -148,6 +196,7 @@ function scheduleScan() {
         scanScheduled = false;
         scanCountups();
         scanOrderRows();
+        initWorkspaceParallax();
     });
 }
 
@@ -171,6 +220,7 @@ function startObserver() {
 function refreshMotion() {
     scanCountups();
     scanOrderRows();
+    initWorkspaceParallax();
 }
 
 function boot() {

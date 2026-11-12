@@ -139,7 +139,14 @@
                         <tbody class="divide-y divide-slate-100">
                             @forelse ($order->items as $item)
                                 <tr class="transition hover:bg-slate-50">
-                                    <td class="px-6 py-4 font-medium text-slate-900">{{ $item->product_name }}</td>
+                                    <td class="px-6 py-4 font-medium text-slate-900">
+                                        {{ $item->product_name }}
+                                        @if ($item->notes)
+                                            <span class="mt-0.5 block text-xs font-normal text-amber-700">
+                                                Catatan: {{ $item->notes }}
+                                            </span>
+                                        @endif
+                                    </td>
                                     <td class="px-6 py-4 text-right tabular-nums text-slate-600">{{ $item->quantity }}</td>
                                     <td class="px-6 py-4 text-right tabular-nums text-slate-600">Rp {{ number_format((float) $item->unit_price, 0, ',', '.') }}</td>
                                     <td class="px-6 py-4 text-right font-medium tabular-nums text-slate-900">Rp {{ number_format((float) $item->subtotal, 0, ',', '.') }}</td>

@@ -1,157 +1,204 @@
 <?php
 
 use App\Models\Product;
-use Livewire\Component;
+use App\Models\Room;
 use App\Services\Orders\CreateOrderService;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Livewire\Attributes\On;
+use Livewire\Component;
 
 new class extends Component {
-    #[\Livewire\Attributes\On('add-to-cart')]
-    public function addToCart(int $productId): void
-    {
-    $this->add($productId);
-    }
     public array $items = [];
 
     public bool $isOpen = false;
+
     public string $paymentMethod = 'cash';
 
     public bool $isCheckingOut = false;
 
-    public ?string $orderNumber = null;
+    public ?string $idempotencyKey = null;
 
-public function checkout(CreateOrderService $service): void
-{
-    if ($this->isCheckingOut) {
-        return;
+    #[On('add-to-cart')]
+    public function addToCart(int $productId, int $quantity = 1, string $notes = ''): void
+    {
+        $this->add($productId, $quantity, $notes);
     }
 
-    $this->validate([
-        'paymentMethod' => ['required', 'in:cash,qris'],
-    ]);
-
-    $roomId = session('guest_room_id');
-
-    if (! $roomId) {
-        throw ValidationException::withMessages([
-            'checkout' => 'Sesi kamar tidak ditemukan. Silakan scan ulang QR kamar.',
-        ]);
+    #[On('open-cart')]
+    public function openCart(): void
+    {
+        $this->isOpen = true;
     }
 
-    $cartItems = collect($this->items)
-        ->map(fn ($item) => [
-            'product_id' => (int) ($item['product_id'] ?? 0),
-            'quantity' => (int) ($item['quantity'] ?? 0),
-        ])
-        ->values()
-        ->all();
+    public function add(int $productId, int $quantity = 1, string $notes = ''): void
+    {
+        $product = Product::query()
+            ->where('is_available', true)
+            ->find($productId);
 
-    $this->isCheckingOut = true;
+        if (! $product) {
+            $this->addError('cart', 'Menu ini sedang tidak tersedia.');
 
-    try {
-        $order = $service->handle(
-            (int) $roomId,
-            $cartItems,
-            $this->paymentMethod,
+            return;
+        }
+
+        $key = (string) $product->id;
+        $quantity = max(1, min(99, $quantity));
+        $notes = trim($notes);
+
+        if (mb_strlen($notes) > 160) {
+            $notes = mb_substr($notes, 0, 160);
+        }
+
+        if (isset($this->items[$key])) {
+            $this->items[$key]['quantity'] = min(
+                99,
+                (int) $this->items[$key]['quantity'] + $quantity
+            );
+
+            if ($notes !== '') {
+                $this->items[$key]['notes'] = $notes;
+            }
+        } else {
+            $this->items[$key] = [
+                'product_id' => $product->id,
+                'quantity' => $quantity,
+                'notes' => $notes,
+            ];
+        }
+
+        $this->resetErrorBag('cart');
+        $this->dispatch('cart-updated', count: $this->totalQuantity);
+    }
+
+    public function increment(int $productId): void
+    {
+        $key = (string) $productId;
+
+        if (! isset($this->items[$key])) {
+            return;
+        }
+
+        $product = Product::query()
+            ->where('is_available', true)
+            ->find($productId);
+
+        if (! $product) {
+            unset($this->items[$key]);
+            $this->dispatch('cart-updated', count: $this->totalQuantity);
+
+            return;
+        }
+
+        $this->items[$key]['quantity'] = min(
+            99,
+            max(1, (int) $this->items[$key]['quantity']) + 1
         );
 
-       session()->put('guest_order_id', $order->id);
-session()->put('guest_room_id', $order->room_id);
-
-$this->items = [];
-
-$this->redirectRoute(
-    'guest.order.confirmation',
-    ['orderNumber' => $order->order_number]
-);
-    } finally {
-        $this->isCheckingOut = false;
-    }
-}
-
-
-public function add(int $productId): void
-{
-    $product = Product::query()
-        ->where('is_available', true)
-        ->findOrFail($productId);
-
-    $key = (string) $product->id;
-
-    if (isset($this->items[$key])) {
-        $this->increment($productId);
-
-        return;
+        $this->dispatch('cart-updated', count: $this->totalQuantity);
     }
 
-    $this->items[$key] = [
-        'product_id' => $product->id,
-        'quantity' => 1,
-    ];
+    public function decrement(int $productId): void
+    {
+        $key = (string) $productId;
 
-    $this->isOpen = true;
-}
+        if (! isset($this->items[$key])) {
+            return;
+        }
 
-public function increment(int $productId): void
-{
-    $key = (string) $productId;
+        $quantity = max(1, (int) $this->items[$key]['quantity']);
 
-    if (! isset($this->items[$key])) {
-        return;
+        if ($quantity <= 1) {
+            unset($this->items[$key]);
+        } else {
+            $this->items[$key]['quantity'] = $quantity - 1;
+        }
+
+        $this->dispatch('cart-updated', count: $this->totalQuantity);
     }
-
-    $product = Product::query()
-        ->where('is_available', true)
-        ->find($productId);
-
-    if (! $product) {
-        unset($this->items[$key]);
-
-        return;
-    }
-
-    $quantity = (int) $this->items[$key]['quantity'];
-
-    if ($quantity >= 99) {
-        return;
-    }
-
-    $this->items[$key]['quantity'] = max(1, $quantity) + 1;
-}
-
-public function decrement(int $productId): void
-{
-    $key = (string) $productId;
-
-    if (! isset($this->items[$key])) {
-        return;
-    }
-
-    $quantity = (int) $this->items[$key]['quantity'];
-
-    if ($quantity <= 1) {
-        unset($this->items[$key]);
-
-        return;
-    }
-
-    $this->items[$key]['quantity'] = $quantity - 1;
-}
-
 
     public function remove(int $productId): void
     {
         unset($this->items[(string) $productId]);
+
+        $this->dispatch('cart-updated', count: $this->totalQuantity);
+    }
+
+    public function checkout(CreateOrderService $service): void
+    {
+        if ($this->isCheckingOut) {
+            return;
+        }
+
+        $this->validate([
+            'paymentMethod' => ['required', 'in:cash,qris'],
+        ]);
+
+        $roomId = session('guest_room_id');
+
+        if (! $roomId) {
+            $this->addError(
+                'checkout',
+                'Sesi kamar tidak ditemukan. Silakan scan ulang QR kamar.'
+            );
+
+            return;
+        }
+
+        $cartItems = collect($this->items)
+            ->map(fn ($item) => [
+                'product_id' => (int) ($item['product_id'] ?? 0),
+                'quantity' => (int) ($item['quantity'] ?? 0),
+                'notes' => (string) ($item['notes'] ?? ''),
+            ])
+            ->values()
+            ->all();
+
+        if (empty($cartItems)) {
+            $this->addError('checkout', 'Keranjang masih kosong.');
+
+            return;
+        }
+
+        // Kunci idempotensi dibuat sekali per percobaan checkout. Jika request
+        // terkirim dua kali (double click/retry), backend mengembalikan pesanan
+        // yang sama alih-alih membuat pesanan baru.
+        $this->idempotencyKey ??= (string) Str::uuid();
+
+        $this->isCheckingOut = true;
+
+        try {
+            $order = $service->handle(
+                (int) $roomId,
+                $cartItems,
+                $this->paymentMethod,
+                $this->idempotencyKey,
+            );
+
+            session()->put('guest_order_id', $order->id);
+            session()->put('guest_room_id', $order->room_id);
+
+            $this->items = [];
+            $this->idempotencyKey = null;
+            $this->isOpen = false;
+            $this->dispatch('cart-updated', count: 0);
+
+            $this->redirectRoute(
+                'guest.order.confirmation',
+                ['orderNumber' => $order->order_number]
+            );
+        } catch (ValidationException $exception) {
+            throw $exception;
+        } finally {
+            $this->isCheckingOut = false;
+        }
     }
 
     public function getCartItemsProperty(): array
     {
         $products = Product::query()
-            ->whereIn(
-                'id',
-                collect($this->items)->pluck('product_id')->all()
-            )
-            ->where('is_available', true)
+            ->whereIn('id', collect($this->items)->pluck('product_id')->all())
             ->get()
             ->keyBy(fn (Product $product) => (string) $product->id);
 
@@ -164,13 +211,16 @@ public function decrement(int $productId): void
                 continue;
             }
 
+            $quantity = min(99, max(1, (int) $item['quantity']));
+
             $result[] = [
                 'id' => $product->id,
                 'name' => $product->name,
                 'price' => (float) $product->price,
-                'quantity' => min(99, max(1, (int) $item['quantity'])),
-                'subtotal' => (float) $product->price
-                * min(99, max(1, (int) $item['quantity'])),
+                'quantity' => $quantity,
+                'notes' => trim((string) ($item['notes'] ?? '')),
+                'available' => (bool) $product->is_available,
+                'subtotal' => (float) $product->price * $quantity,
             ];
         }
 
@@ -179,230 +229,210 @@ public function decrement(int $productId): void
 
     public function getTotalQuantityProperty(): int
     {
-        return collect($this->cartItems)
-            ->sum('quantity');
+        return collect($this->cartItems)->sum('quantity');
     }
 
     public function getTotalPriceProperty(): float
     {
-        return collect($this->cartItems)
-            ->sum('subtotal');
+        return collect($this->cartItems)->sum('subtotal');
+    }
+
+    public function getRoomProperty(): ?Room
+    {
+        $roomId = session('guest_room_id');
+
+        return $roomId ? Room::query()->find($roomId) : null;
     }
 };
 ?>
 
-<div>
-    @if ($orderNumber)
-    <div class="fixed inset-x-4 top-4 z-[60] mx-auto max-w-lg rounded-2xl border border-teal/20 bg-white p-5 shadow-lg">
-        <p class="font-display text-xl font-semibold text-charcoal">
-            Pesanan berhasil dibuat!
-        </p>
-        <p class="mt-2 text-sm text-gray-500">
-            Nomor pesanan:
-            <span class="font-semibold text-teal">{{ $orderNumber }}</span>
-        </p>
+<div
+    x-data
+    @keydown.escape.window="$wire.set('isOpen', false)"
+>
+    <div class="cart-dock" aria-live="polite">
+        <button type="button" class="cart-dock-info" wire:click="$set('isOpen', true)">
+            <small>{{ $this->totalQuantity }} item dalam keranjang</small>
+            <b>Rp {{ number_format($this->totalPrice, 0, ',', '.') }}</b>
+        </button>
+
         <button
             type="button"
-            wire:click="$set('orderNumber', null)"
-            class="mt-3 text-sm font-semibold text-teal hover:underline"
+            class="cart-dock-button"
+            wire:click="$set('isOpen', true)"
+            @disabled($this->totalQuantity === 0)
         >
-            Tutup
+            Lihat Keranjang
         </button>
-    </div>
-@endif
-    <div class="fixed inset-x-0 bottom-0 z-40 border-t border-black/5 bg-white/95 p-4 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] backdrop-blur">
-        <div class="mx-auto flex max-w-4xl items-center justify-between gap-4">
-            <button
-                type="button"
-                wire:click="$set('isOpen', true)"
-                class="min-w-0 text-left"
-            >
-                <span class="block text-xs text-gray-500">
-                    {{ $this->totalQuantity }} item dalam keranjang
-                </span>
-
-                <span class="mt-1 block font-semibold text-teal">
-                    Rp {{ number_format($this->totalPrice, 0, ',', '.') }}
-                </span>
-            </button>
-
-            <button
-                type="button"
-                wire:click="$set('isOpen', true)"
-                @disabled($this->totalQuantity === 0)
-                class="rounded-xl bg-teal px-5 py-3 text-sm font-semibold text-white transition hover:bg-teal/90 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-                Lihat Keranjang
-            </button>
-        </div>
     </div>
 
     @if ($isOpen)
-        <div class="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center sm:p-4">
+        <div
+            class="cart-overlay"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="cart-title"
+            wire:keydown.escape="$set('isOpen', false)"
+        >
             <button
                 type="button"
+                class="absolute inset-0 h-full w-full cursor-default border-0 bg-transparent"
                 wire:click="$set('isOpen', false)"
                 aria-label="Tutup keranjang"
-                class="absolute inset-0 h-full w-full cursor-default"
+                tabindex="-1"
             ></button>
 
-            <section class="relative z-10 max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-t-3xl bg-cream p-6 sm:rounded-3xl">
-                <div class="flex items-center justify-between">
+            <section
+                class="cart-panel"
+                x-data
+                x-effect="$wire.isOpen && $nextTick(() => $refs.cartClose?.focus())"
+            >
+                <div class="cart-panel-head">
                     <div>
-                        <p class="text-xs font-semibold uppercase tracking-widest text-teal">
-                            Ngoffe ID
-                        </p>
-                        <h2 class="mt-1 font-display text-2xl font-semibold">
-                            Keranjangmu
-                        </h2>
+                        <p class="cart-panel-kicker">Ngoffe ID</p>
+                        <h2 class="cart-panel-title" id="cart-title">Keranjangmu</h2>
                     </div>
 
                     <button
                         type="button"
+                        class="cart-close"
+                        x-ref="cartClose"
                         wire:click="$set('isOpen', false)"
-                        class="rounded-full px-3 py-2 text-sm text-gray-500 hover:bg-black/5"
+                        aria-label="Tutup keranjang"
                     >
-                        Tutup
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                            <path d="M6 6l12 12M18 6 6 18"/>
+                        </svg>
                     </button>
                 </div>
 
-                <div class="mt-6 space-y-4">
+                @if ($this->room)
+                    <div class="cart-room">
+                        <span>Pesanan untuk</span>
+                        <b>Kamar {{ $this->room->room_number }}</b>
+                    </div>
+                @endif
+
+                <div class="cart-items">
                     @forelse ($this->cartItems as $item)
-                        <article
-                            wire:key="cart-item-{{ $item['id'] }}"
-                            class="rounded-2xl border border-black/5 bg-white p-4"
-                        >
-                            <div class="flex items-start justify-between gap-3">
+                        <article class="cart-item" wire:key="cart-item-{{ $item['id'] }}">
+                            <div class="cart-item-top">
                                 <div>
-                                    <h3 class="font-semibold">
-                                        {{ $item['name'] }}
-                                    </h3>
-                                    <p class="mt-1 text-sm text-gray-500">
+                                    <h3 class="cart-item-name">{{ $item['name'] }}</h3>
+                                    <p class="cart-item-price">
                                         Rp {{ number_format($item['price'], 0, ',', '.') }}
+                                        @unless ($item['available'])
+                                            · <span style="color: #a33b3b;">tidak tersedia</span>
+                                        @endunless
                                     </p>
                                 </div>
 
                                 <button
                                     type="button"
+                                    class="cart-remove"
                                     wire:click="remove({{ $item['id'] }})"
-                                    class="text-xs font-medium text-red-600 hover:underline"
+                                    aria-label="Hapus {{ $item['name'] }} dari keranjang"
                                 >
                                     Hapus
                                 </button>
                             </div>
 
-                            <div class="mt-4 flex items-center justify-between">
-                                <div class="flex items-center gap-3">
+                            @if ($item['notes'] !== '')
+                                <p class="cart-item-note">
+                                    <span class="visually-hidden">Catatan: </span>{{ $item['notes'] }}
+                                </p>
+                            @endif
+
+                            <div class="cart-item-bottom">
+                                <div class="qty-control">
                                     <button
                                         type="button"
                                         wire:click="decrement({{ $item['id'] }})"
                                         aria-label="Kurangi {{ $item['name'] }}"
-                                        class="flex h-9 w-9 items-center justify-center rounded-xl border border-black/10 hover:bg-cream"
                                     >
                                         −
                                     </button>
-
-                                    <span class="min-w-5 text-center font-semibold">
-                                        {{ $item['quantity'] }}
-                                    </span>
-
+                                    <span>{{ $item['quantity'] }}</span>
                                     <button
                                         type="button"
                                         wire:click="increment({{ $item['id'] }})"
                                         aria-label="Tambah {{ $item['name'] }}"
-                                        class="flex h-9 w-9 items-center justify-center rounded-xl border border-black/10 hover:bg-cream"
                                     >
                                         +
                                     </button>
                                 </div>
 
-                                <p class="font-semibold text-teal">
+                                <p class="cart-item-subtotal">
                                     Rp {{ number_format($item['subtotal'], 0, ',', '.') }}
                                 </p>
                             </div>
                         </article>
                     @empty
-                        <div class="rounded-2xl bg-white p-8 text-center">
-                            <p class="font-display text-xl font-semibold">
-                                Keranjang masih kosong
-                            </p>
-                            <p class="mt-2 text-sm text-gray-500">
-                                Tambahkan menu favoritmu untuk memulai.
-                            </p>
+                        <div class="cart-empty">
+                            <b>Keranjang masih kosong</b>
+                            <span>Tambahkan menu favoritmu untuk memulai.</span>
                         </div>
                     @endforelse
                 </div>
 
-                
-<div class="mt-6 border-t border-black/10 pt-5">
-    <div class="flex items-center justify-between">
-        <span class="text-sm text-gray-500">Total pesanan</span>
-        <span class="text-lg font-semibold text-teal">
-            Rp {{ number_format($this->totalPrice, 0, ',', '.') }}
-        </span>
-    </div>
+                <div class="cart-summary">
+                    <div class="cart-total-row">
+                        <span>Total pesanan</span>
+                        <b>Rp {{ number_format($this->totalPrice, 0, ',', '.') }}</b>
+                    </div>
 
-    <div class="mt-5 space-y-3">
-        <p class="text-sm font-semibold text-charcoal">
-            Pilih metode pembayaran
-        </p>
+                    <p class="cart-pay-title">Pilih metode pembayaran</p>
 
-        <label class="flex cursor-pointer items-center gap-3 rounded-xl border border-black/10 bg-white p-4">
-            <input
-                type="radio"
-                wire:model="paymentMethod"
-                value="cash"
-                class="accent-teal"
-            >
-            <span>
-                <span class="block text-sm font-semibold">Tunai</span>
-                <span class="text-xs text-gray-500">Bayar kepada kasir</span>
-            </span>
-        </label>
+                    <div class="cart-pay-options">
+                        <label class="cart-pay">
+                            <input type="radio" wire:model="paymentMethod" value="cash">
+                            <span>
+                                <b>Tunai</b>
+                                <small>Bayar kepada kasir saat pesanan diantar</small>
+                            </span>
+                        </label>
 
-        <label class="flex cursor-pointer items-center gap-3 rounded-xl border border-black/10 bg-white p-4">
-            <input
-                type="radio"
-                wire:model="paymentMethod"
-                value="qris"
-                class="accent-teal"
-            >
-            <span>
-                <span class="block text-sm font-semibold">QRIS</span>
-                <span class="text-xs text-gray-500">Menunggu instruksi pembayaran</span>
-            </span>
-        </label>
-    </div>
+                        <label class="cart-pay">
+                            <input type="radio" wire:model="paymentMethod" value="qris">
+                            <span>
+                                <b>QRIS</b>
+                                <small>Menunggu instruksi pembayaran dari kasir</small>
+                            </span>
+                        </label>
+                    </div>
 
-    @error('checkout')
-        <p class="mt-3 text-sm text-red-600">{{ $message }}</p>
-    @enderror
+                    @error('checkout')
+                        <p class="cart-error">{{ $message }}</p>
+                    @enderror
 
-    @error('paymentMethod')
-        <p class="mt-3 text-sm text-red-600">{{ $message }}</p>
-    @enderror
+                    @error('cart')
+                        <p class="cart-error">{{ $message }}</p>
+                    @enderror
 
-    <button
-        type="button"
-        wire:click="checkout"
-        wire:loading.attr="disabled"
-        wire:target="checkout"
-        @disabled($this->totalQuantity === 0)
-        class="mt-5 w-full rounded-xl bg-teal px-5 py-3 font-semibold text-white transition hover:bg-teal/90 disabled:cursor-not-allowed disabled:opacity-50"
-    >
-        <span wire:loading.remove wire:target="checkout">Buat Pesanan</span>
-        <span wire:loading wire:target="checkout">Memproses pesanan...</span>
-    </button>
+                    @error('paymentMethod')
+                        <p class="cart-error">{{ $message }}</p>
+                    @enderror
 
-    <button
-        type="button"
-        wire:click="$set('isOpen', false)"
-        class="mt-3 w-full rounded-xl border border-black/10 px-5 py-3 text-sm font-semibold text-charcoal hover:bg-white"
-    >
-        Lanjut Pilih Menu
-    </button>
-</div>
+                    <button
+                        type="button"
+                        class="cart-submit"
+                        wire:click="checkout"
+                        wire:loading.attr="disabled"
+                        wire:target="checkout"
+                        @disabled($this->totalQuantity === 0 || $this->isCheckingOut)
+                    >
+                        <span wire:loading.remove wire:target="checkout">Kirim Pesanan</span>
+                        <span wire:loading wire:target="checkout">Mengirim pesanan…</span>
+                    </button>
 
+                    <button
+                        type="button"
+                        class="cart-continue"
+                        wire:click="$set('isOpen', false)"
+                    >
+                        Lanjut Pilih Menu
+                    </button>
+                </div>
             </section>
         </div>
     @endif

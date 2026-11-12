@@ -31,15 +31,9 @@
             'roles' => ['superadmin', 'admin', 'kitchen'],
         ],
         [
-            'label' => 'Kamar & QR',
-            'route' => 'admin.rooms.index',
-            'match' => 'admin.rooms.*',
-            'roles' => ['superadmin', 'admin'],
-        ],
-        [
             'label' => 'Produk & Kategori',
             'route' => 'admin.products.index',
-            'match' => 'admin.products.*|admin.categories.*',
+            'match' => ['admin.products.*', 'admin.categories.*'],
             'roles' => ['superadmin', 'admin'],
         ],
         [
@@ -52,6 +46,12 @@
             'label' => 'Inventori',
             'route' => 'admin.inventory.index',
             'match' => 'admin.inventory.*',
+            'roles' => ['superadmin', 'admin'],
+        ],
+        [
+            'label' => 'Pengaturan',
+            'route' => 'admin.settings.index',
+            'match' => ['admin.settings.*', 'admin.rooms.*'],
             'roles' => ['superadmin', 'admin'],
         ],
     ];

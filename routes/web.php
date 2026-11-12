@@ -112,6 +112,10 @@ Route::middleware('auth')->group(function () {
             Route::patch('/{room}/regenerate', 'regenerate')->name('regenerate');
         });
 
+    Route::view('/admin/settings', 'admin.settings.index')
+        ->middleware('role:superadmin|admin')
+        ->name('admin.settings.index');
+
     Route::prefix('admin/kitchen')
         ->name('admin.kitchen.')
         ->middleware('role:superadmin|admin|kitchen')
@@ -122,8 +126,17 @@ Route::middleware('auth')->group(function () {
         });
 });
 
+Route::get('/pesan', [RoomOrderController::class, 'entry'])
+    ->name('guest.order.entry');
+
+Route::post('/pesan', [RoomOrderController::class, 'open'])
+    ->middleware('throttle:20,1')
+    ->name('guest.order.open');
+
+Route::get('/pesan/menu', [RoomOrderController::class, 'menu'])
+    ->name('guest.order.menu');
+
 Route::get('/order/{token}', [RoomOrderController::class, 'show'])
-    ->where('token', '[A-Za-z0-9]{64}')
     ->name('guest.order.show');
 
 Route::get('/order/confirmation/{orderNumber}', [
@@ -133,4 +146,11 @@ Route::get('/order/confirmation/{orderNumber}', [
     ->where('orderNumber', '[A-Za-z0-9-]+')
     ->name('guest.order.confirmation');
 
-  
+Route::get('/pesanan/{token}', [RoomOrderController::class, 'status'])
+    ->name('guest.order.status');
+
+Route::get('/pesanan/{token}/status', [RoomOrderController::class, 'statusData'])
+    ->where('token', '[A-Za-z0-9]{64}')
+    ->middleware('throttle:30,1')
+    ->name('guest.order.status-data');
+

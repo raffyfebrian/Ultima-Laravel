@@ -38,7 +38,7 @@
             <style>
                 .reveal { opacity: 1 !important; transform: none !important; }
                 .nav-toggle { display: none !important; }
-                @media (max-width: 960px) {
+                @media (max-width: 1040px) {
                     .primary-nav {
                         position: static !important;
                         opacity: 1 !important;
