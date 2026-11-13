@@ -73,7 +73,9 @@
                 this.qty = Math.max(1, this.qty - 1);
             },
             get totalLabel() {
-                return 'Rp ' + new Intl.NumberFormat('id-ID').format(this.sheet.price * this.qty);
+                const price = Number(this.sheet.price) || 0;
+
+                return 'Rp ' + new Intl.NumberFormat('id-ID').format(price * this.qty);
             },
             addFromSheet() {
                 if (this.sheet.soldout) {

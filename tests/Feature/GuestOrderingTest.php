@@ -167,4 +167,31 @@ class GuestOrderingTest extends TestCase
         $this->assertSame('tanpa gula', $first->items()->first()->notes);
         $this->assertSame('20000.00', (string) $first->total);
     }
+
+    public function test_cart_quantity_is_validated_by_server_and_rolls_back_unavailable_menu(): void
+    {
+        $room = $this->makeRoom();
+        $product = $this->makeProduct(10000);
+
+        $this->withSession([
+            'guest_room_id' => $room->id,
+            'guest_room_token' => $room->qr_token,
+        ]);
+
+        $component = \Livewire\Livewire::test('guest.cart')
+            ->call('add', $product->id, 2)
+            ->call('setQuantity', $product->id, 5)
+            ->assertSet("items.{$product->id}.quantity", 5)
+            ->assertDispatched('cart-updated', count: 5);
+
+        $product->update(['is_available' => false]);
+
+        $component
+            ->call('setQuantity', $product->id, 8)
+            ->assertHasErrors('cart')
+            ->assertDispatched('cart-rejected', productId: $product->id)
+            ->assertSet("items.{$product->id}.quantity", 5)
+            ->call('setQuantity', $product->id, 0)
+            ->assertSet('items', []);
+    }
 }

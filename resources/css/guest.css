@@ -1115,10 +1115,96 @@ a {
 }
 
 .cart-item {
+    position: relative;
+    display: grid;
+    grid-template-rows: 1fr;
     padding: 14px;
     border: 1px solid var(--ng-border);
     border-radius: 16px;
     background: var(--ng-surface);
+    overflow: hidden;
+    transition:
+        grid-template-rows 260ms var(--ng-ease),
+        padding 260ms var(--ng-ease),
+        margin 260ms var(--ng-ease),
+        opacity 200ms ease,
+        border-color 220ms ease;
+}
+
+.cart-item-inner {
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* Baris memendek saat jumlah turun ke nol, lalu Livewire menghapusnya. */
+.cart-item.is-removing {
+    grid-template-rows: 0fr;
+    padding-block: 0;
+    margin-bottom: -10px;
+    opacity: 0;
+    border-color: transparent;
+}
+
+/* Garis tipis yang tumbuh/menyusut sebagai umpan balik perubahan jumlah. */
+.cart-item::after {
+    content: '';
+    position: absolute;
+    left: 14px;
+    right: 14px;
+    bottom: 0;
+    height: 2px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--ng-green), var(--ng-lime));
+    transform: scaleX(0);
+    opacity: 0;
+    pointer-events: none;
+}
+
+.cart-item.is-increasing {
+    animation: row-grow 320ms var(--ng-ease);
+}
+
+.cart-item.is-decreasing {
+    animation: row-shrink 320ms var(--ng-ease);
+}
+
+@keyframes row-grow {
+    0%, 100% { padding-block: 14px; }
+    45% { padding-block: 15px; }
+}
+
+@keyframes row-shrink {
+    0%, 100% { padding-block: 14px; }
+    45% { padding-block: 13px; }
+}
+
+.cart-item.is-increasing::after {
+    transform-origin: left center;
+    animation: row-sweep 340ms var(--ng-ease);
+}
+
+.cart-item.is-decreasing::after {
+    transform-origin: right center;
+    animation: row-sweep 340ms var(--ng-ease);
+}
+
+@keyframes row-sweep {
+    0% { transform: scaleX(0); opacity: 0.85; }
+    65% { transform: scaleX(1); opacity: 0.85; }
+    100% { transform: scaleX(1); opacity: 0; }
+}
+
+.cart-item.is-rolling-back {
+    border-color: #e2b3b3;
+    animation: cart-rollback 440ms var(--ng-ease);
+}
+
+@keyframes cart-rollback {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-5px); }
+    40% { transform: translateX(4px); }
+    60% { transform: translateX(-3px); }
+    80% { transform: translateX(2px); }
 }
 
 .cart-item-top {
@@ -1201,17 +1287,49 @@ a {
     background: var(--ng-surface);
 }
 
-.qty-control span {
-    min-width: 24px;
+.qty-control .qty-value {
+    display: inline-block;
+    min-width: 26px;
     text-align: center;
     font-size: 0.85rem;
     font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    will-change: transform, opacity;
+}
+
+.qty-control .qty-value.is-rolling-up {
+    animation: qty-roll-up 240ms var(--ng-ease);
+}
+
+.qty-control .qty-value.is-rolling-down {
+    animation: qty-roll-down 240ms var(--ng-ease);
+}
+
+@keyframes qty-roll-up {
+    0% { transform: translateY(45%); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes qty-roll-down {
+    0% { transform: translateY(-45%); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
 }
 
 .cart-item-subtotal {
+    display: inline-block;
     font-size: 0.9rem;
     font-weight: 700;
+    font-variant-numeric: tabular-nums;
     color: var(--ng-primary);
+}
+
+.cart-item-subtotal.is-bumping {
+    animation: subtotal-slide 260ms var(--ng-ease);
+}
+
+@keyframes subtotal-slide {
+    0% { transform: translateX(6px); opacity: 0.35; }
+    100% { transform: translateX(0); opacity: 1; }
 }
 
 .cart-empty {
@@ -2368,6 +2486,14 @@ a {
 
     .status-rail-fill {
         transition: none;
+    }
+
+    .cart-item,
+    .cart-item::after,
+    .qty-value,
+    .cart-item-subtotal {
+        animation: none !important;
+        transition: none !important;
     }
 
     .confetti span {

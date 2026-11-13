@@ -118,6 +118,44 @@ new class extends Component {
         $this->dispatch('cart-updated', count: $this->totalQuantity);
     }
 
+    /**
+     * Menetapkan jumlah final setelah tamu menekan +/−. UI melakukan optimistic
+     * update; method ini tetap memvalidasi ketersediaan di server dan memberi
+     * sinyal "cart-rejected" bila perubahan harus dibatalkan.
+     */
+    public function setQuantity(int $productId, int $quantity): void
+    {
+        $key = (string) $productId;
+
+        if (! isset($this->items[$key])) {
+            return;
+        }
+
+        if ($quantity < 1) {
+            unset($this->items[$key]);
+            $this->resetErrorBag('cart');
+            $this->dispatch('cart-updated', count: $this->totalQuantity);
+
+            return;
+        }
+
+        $product = Product::query()
+            ->where('is_available', true)
+            ->find($productId);
+
+        if (! $product) {
+            $this->addError('cart', 'Menu ini sedang tidak tersedia.');
+            $this->dispatch('cart-rejected', productId: $productId, reason: 'unavailable');
+
+            return;
+        }
+
+        $this->items[$key]['quantity'] = max(1, min(99, $quantity));
+
+        $this->resetErrorBag('cart');
+        $this->dispatch('cart-updated', count: $this->totalQuantity);
+    }
+
     public function remove(int $productId): void
     {
         unset($this->items[(string) $productId]);
@@ -252,8 +290,8 @@ new class extends Component {
 >
     <div class="cart-dock" aria-live="polite">
         <button type="button" class="cart-dock-info" wire:click="$set('isOpen', true)">
-            <small>{{ $this->totalQuantity }} item dalam keranjang</small>
-            <b>Rp {{ number_format($this->totalPrice, 0, ',', '.') }}</b>
+            <small><span data-dock-count>{{ $this->totalQuantity }}</span> item dalam keranjang</small>
+            <b data-dock-total>Rp {{ number_format($this->totalPrice, 0, ',', '.') }}</b>
         </button>
 
         <button
@@ -313,58 +351,70 @@ new class extends Component {
                     </div>
                 @endif
 
+                <p class="visually-hidden" role="status" aria-live="polite" data-cart-announcer></p>
+
                 <div class="cart-items">
                     @forelse ($this->cartItems as $item)
-                        <article class="cart-item" wire:key="cart-item-{{ $item['id'] }}">
-                            <div class="cart-item-top">
-                                <div>
-                                    <h3 class="cart-item-name">{{ $item['name'] }}</h3>
-                                    <p class="cart-item-price">
-                                        Rp {{ number_format($item['price'], 0, ',', '.') }}
-                                        @unless ($item['available'])
-                                            · <span style="color: #a33b3b;">tidak tersedia</span>
-                                        @endunless
+                        <article
+                            class="cart-item"
+                            wire:key="cart-item-{{ $item['id'] }}"
+                            data-cart-item
+                            data-product-id="{{ $item['id'] }}"
+                            data-confirmed-qty="{{ $item['quantity'] }}"
+                            data-display-qty="{{ $item['quantity'] }}"
+                            data-unit-price="{{ $item['price'] }}"
+                        >
+                            <div class="cart-item-inner">
+                                <div class="cart-item-top">
+                                    <div>
+                                        <h3 class="cart-item-name">{{ $item['name'] }}</h3>
+                                        <p class="cart-item-price">
+                                            Rp {{ number_format($item['price'], 0, ',', '.') }}
+                                            @unless ($item['available'])
+                                                · <span style="color: #a33b3b;">tidak tersedia</span>
+                                            @endunless
+                                        </p>
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        class="cart-remove"
+                                        wire:click="remove({{ $item['id'] }})"
+                                        aria-label="Hapus {{ $item['name'] }} dari keranjang"
+                                    >
+                                        Hapus
+                                    </button>
+                                </div>
+
+                                @if ($item['notes'] !== '')
+                                    <p class="cart-item-note">
+                                        <span class="visually-hidden">Catatan: </span>{{ $item['notes'] }}
+                                    </p>
+                                @endif
+
+                                <div class="cart-item-bottom">
+                                    <div class="qty-control">
+                                        <button
+                                            type="button"
+                                            data-qty-action="decrement"
+                                            aria-label="Kurangi {{ $item['name'] }}"
+                                        >
+                                            −
+                                        </button>
+                                        <span class="qty-value" data-qty-value>{{ $item['quantity'] }}</span>
+                                        <button
+                                            type="button"
+                                            data-qty-action="increment"
+                                            aria-label="Tambah {{ $item['name'] }}"
+                                        >
+                                            +
+                                        </button>
+                                    </div>
+
+                                    <p class="cart-item-subtotal" data-item-subtotal>
+                                        Rp {{ number_format($item['subtotal'], 0, ',', '.') }}
                                     </p>
                                 </div>
-
-                                <button
-                                    type="button"
-                                    class="cart-remove"
-                                    wire:click="remove({{ $item['id'] }})"
-                                    aria-label="Hapus {{ $item['name'] }} dari keranjang"
-                                >
-                                    Hapus
-                                </button>
-                            </div>
-
-                            @if ($item['notes'] !== '')
-                                <p class="cart-item-note">
-                                    <span class="visually-hidden">Catatan: </span>{{ $item['notes'] }}
-                                </p>
-                            @endif
-
-                            <div class="cart-item-bottom">
-                                <div class="qty-control">
-                                    <button
-                                        type="button"
-                                        wire:click="decrement({{ $item['id'] }})"
-                                        aria-label="Kurangi {{ $item['name'] }}"
-                                    >
-                                        −
-                                    </button>
-                                    <span>{{ $item['quantity'] }}</span>
-                                    <button
-                                        type="button"
-                                        wire:click="increment({{ $item['id'] }})"
-                                        aria-label="Tambah {{ $item['name'] }}"
-                                    >
-                                        +
-                                    </button>
-                                </div>
-
-                                <p class="cart-item-subtotal">
-                                    Rp {{ number_format($item['subtotal'], 0, ',', '.') }}
-                                </p>
                             </div>
                         </article>
                     @empty
@@ -378,7 +428,7 @@ new class extends Component {
                 <div class="cart-summary">
                     <div class="cart-total-row">
                         <span>Total pesanan</span>
-                        <b>Rp {{ number_format($this->totalPrice, 0, ',', '.') }}</b>
+                        <b data-cart-total>Rp {{ number_format($this->totalPrice, 0, ',', '.') }}</b>
                     </div>
 
                     <p class="cart-pay-title">Pilih metode pembayaran</p>
@@ -408,6 +458,8 @@ new class extends Component {
                     @error('cart')
                         <p class="cart-error">{{ $message }}</p>
                     @enderror
+
+                    <p class="cart-error" data-cart-client-error hidden></p>
 
                     @error('paymentMethod')
                         <p class="cart-error">{{ $message }}</p>

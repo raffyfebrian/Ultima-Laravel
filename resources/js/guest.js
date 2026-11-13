@@ -294,6 +294,344 @@ function initFlyToCart() {
 }
 
 /* --------------------------------------------------------------------------
+   Kuantitas keranjang: optimistic update + rollback
+   -------------------------------------------------------------------------- */
+
+const cartQuantityState = new Map();
+const cartRollbackTimers = new WeakMap();
+let cartErrorTimer = null;
+
+function formatRupiah(value) {
+    return `Rp ${Math.round(value).toLocaleString('id-ID')}`;
+}
+
+function readQuantity(row) {
+    const value = Number.parseInt(
+        row.dataset.displayQty ?? row.dataset.confirmedQty ?? '0',
+        10,
+    );
+
+    return Number.isFinite(value) ? Math.max(0, value) : 0;
+}
+
+function updateCartTotals() {
+    let count = 0;
+    let total = 0;
+
+    document.querySelectorAll('[data-cart-item]').forEach((row) => {
+        const quantity = readQuantity(row);
+        const price = Number(row.dataset.unitPrice ?? 0) || 0;
+
+        count += quantity;
+        total += quantity * price;
+    });
+
+    const dockCount = document.querySelector('[data-dock-count]');
+    const dockTotal = document.querySelector('[data-dock-total]');
+    const cartTotal = document.querySelector('[data-cart-total]');
+
+    if (dockCount) {
+        dockCount.textContent = String(count);
+    }
+
+    if (dockTotal) {
+        dockTotal.textContent = formatRupiah(total);
+    }
+
+    if (cartTotal) {
+        cartTotal.textContent = formatRupiah(total);
+    }
+
+    window.dispatchEvent(new CustomEvent('cart-updated', { detail: { count } }));
+}
+
+function animateClass(element, className) {
+    if (!element) {
+        return;
+    }
+
+    element.classList.remove(className);
+    void element.offsetWidth;
+    element.classList.add(className);
+}
+
+function paintCartRow(row, quantity, direction) {
+    const value = row.querySelector('[data-qty-value]');
+    const subtotal = row.querySelector('[data-item-subtotal]');
+    const price = Number(row.dataset.unitPrice ?? 0) || 0;
+    const safeQuantity = Math.max(0, Math.min(99, quantity));
+
+    row.dataset.displayQty = String(safeQuantity);
+    row.classList.toggle('is-removing', safeQuantity === 0);
+
+    if (value) {
+        value.textContent = String(safeQuantity);
+        animateClass(value, direction === 'up' ? 'is-rolling-up' : 'is-rolling-down');
+    }
+
+    if (subtotal) {
+        subtotal.textContent = formatRupiah(price * safeQuantity);
+        animateClass(subtotal, 'is-bumping');
+    }
+
+    if (safeQuantity === 0) {
+        row.classList.remove('is-increasing', 'is-decreasing');
+    } else {
+        animateClass(row, direction === 'up' ? 'is-increasing' : 'is-decreasing');
+    }
+
+    const announcer = document.querySelector('[data-cart-announcer]');
+
+    if (announcer) {
+        const name = row.querySelector('.cart-item-name')?.textContent?.trim() ?? 'Item';
+
+        announcer.textContent =
+            safeQuantity === 0
+                ? `${name} dihapus dari keranjang`
+                : `${name}: ${safeQuantity} item`;
+    }
+
+    updateCartTotals();
+}
+
+function showCartClientError(message) {
+    const error = document.querySelector('[data-cart-client-error]');
+
+    if (!error) {
+        return;
+    }
+
+    error.textContent = message;
+    error.hidden = false;
+
+    window.clearTimeout(cartErrorTimer);
+    cartErrorTimer = window.setTimeout(() => {
+        error.hidden = true;
+        error.textContent = '';
+    }, 4000);
+}
+
+function clearCartClientError() {
+    const error = document.querySelector('[data-cart-client-error]');
+
+    if (!error) {
+        return;
+    }
+
+    window.clearTimeout(cartErrorTimer);
+    error.hidden = true;
+    error.textContent = '';
+}
+
+function findCartRow(productId) {
+    return document.querySelector(`[data-cart-item][data-product-id="${productId}"]`);
+}
+
+function getCartWire(element) {
+    const root = element.closest('[wire\\:id]');
+
+    if (!root || !window.Livewire?.find) {
+        return null;
+    }
+
+    return window.Livewire.find(root.getAttribute('wire:id'));
+}
+
+function rollbackCartQuantity(productId, message, showMessage = true) {
+    const state = cartQuantityState.get(productId);
+    const row = findCartRow(productId);
+
+    if (state) {
+        window.clearTimeout(state.timer);
+        state.timer = null;
+        state.inFlight = false;
+    }
+
+    if (!row) {
+        return;
+    }
+
+    const confirmed = Math.max(
+        0,
+        Number.parseInt(row.dataset.confirmedQty ?? '1', 10) || 0,
+    );
+    const current = readQuantity(row);
+
+    paintCartRow(row, confirmed, current > confirmed ? 'down' : 'up');
+    row.classList.remove('is-removing');
+
+    window.clearTimeout(cartRollbackTimers.get(row));
+    row.classList.remove('is-rolling-back');
+    void row.offsetWidth;
+    row.classList.add('is-rolling-back');
+    cartRollbackTimers.set(
+        row,
+        window.setTimeout(() => row.classList.remove('is-rolling-back'), 480),
+    );
+
+    if (showMessage) {
+        showCartClientError(message);
+    }
+
+    if (state) {
+        state.target = confirmed;
+    }
+}
+
+function sendCartQuantity(productId, state) {
+    state.timer = null;
+
+    if (!state.wire) {
+        rollbackCartQuantity(productId, 'Koneksi tidak tersedia. Coba lagi.');
+
+        return;
+    }
+
+    const sentTarget = state.target;
+    state.inFlight = true;
+
+    Promise.resolve(state.wire.call('setQuantity', productId, sentTarget))
+        .then(() => {
+            state.inFlight = false;
+            clearCartClientError();
+
+            window.requestAnimationFrame(() => {
+                window.requestAnimationFrame(() => {
+                    const row = findCartRow(productId);
+
+                    if (!row) {
+                        cartQuantityState.delete(productId);
+                        updateCartTotals();
+
+                        return;
+                    }
+
+                    if (state.target !== sentTarget) {
+                        // Ada klik baru selama request berjalan: pertahankan angka optimistis.
+                        paintCartRow(
+                            row,
+                            state.target,
+                            state.target > sentTarget ? 'up' : 'down',
+                        );
+
+                        return;
+                    }
+
+                    const serverQuantity = Math.max(
+                        0,
+                        Number.parseInt(
+                            row.querySelector('[data-qty-value]')?.textContent ?? sentTarget,
+                            10,
+                        ) || 0,
+                    );
+
+                    row.dataset.confirmedQty = String(serverQuantity);
+                    row.dataset.displayQty = String(serverQuantity);
+                    row.classList.toggle('is-removing', serverQuantity === 0);
+                    updateCartTotals();
+                });
+            });
+        })
+        .catch(() => {
+            state.inFlight = false;
+            rollbackCartQuantity(
+                productId,
+                'Jumlah belum tersimpan. Periksa koneksi lalu coba lagi.',
+            );
+        });
+}
+
+function queueCartQuantity(button, row, target) {
+    const productId = Number(row.dataset.productId);
+    const state = cartQuantityState.get(productId) ?? {
+        wire: getCartWire(button),
+        target,
+        timer: null,
+        inFlight: false,
+    };
+
+    state.wire = state.wire ?? getCartWire(button);
+    state.target = target;
+    state.row = row;
+
+    window.clearTimeout(state.timer);
+    state.timer = window.setTimeout(() => sendCartQuantity(productId, state), 220);
+
+    cartQuantityState.set(productId, state);
+}
+
+function registerCartRequestFailure() {
+    if (
+        !window.Livewire?.hook ||
+        document.documentElement.dataset.cartCommitHook === 'true'
+    ) {
+        return;
+    }
+
+    document.documentElement.dataset.cartCommitHook = 'true';
+
+    window.Livewire.hook('commit', ({ component, fail }) => {
+        fail(() => {
+            cartQuantityState.forEach((state, productId) => {
+                if (state.inFlight && state.wire?.$id === component.id) {
+                    rollbackCartQuantity(
+                        productId,
+                        'Koneksi terputus. Jumlah belum tersimpan.',
+                    );
+                }
+            });
+        });
+    });
+}
+
+function initCartQuantity() {
+    registerCartRequestFailure();
+
+    if (document.documentElement.dataset.cartQuantityReady === 'true') {
+        return;
+    }
+
+    document.documentElement.dataset.cartQuantityReady = 'true';
+
+    document.addEventListener('click', (event) => {
+        const button = event.target.closest('[data-qty-action]');
+
+        if (!button || button.disabled) {
+            return;
+        }
+
+        const row = button.closest('[data-cart-item]');
+
+        if (!row) {
+            return;
+        }
+
+        const current = readQuantity(row);
+        const step = button.dataset.qtyAction === 'increment' ? 1 : -1;
+        const next = Math.max(0, Math.min(99, current + step));
+
+        if (next === current) {
+            return;
+        }
+
+        event.preventDefault();
+        paintCartRow(row, next, step > 0 ? 'up' : 'down');
+        queueCartQuantity(button, row, next);
+    });
+
+    window.addEventListener('cart-rejected', (event) => {
+        const detail = Array.isArray(event.detail) ? event.detail[0] : event.detail;
+        const productId = Number(detail?.productId ?? detail?.product_id);
+
+        if (!Number.isFinite(productId)) {
+            return;
+        }
+
+        rollbackCartQuantity(productId, '', false);
+    });
+}
+
+/* --------------------------------------------------------------------------
    Polling status pesanan (maksimal sekali per 20 detik)
    -------------------------------------------------------------------------- */
 
@@ -434,6 +772,7 @@ function bootGuest() {
     initCartBadge();
     initProductImages();
     initFlyToCart();
+    initCartQuantity();
     initStatusPolling();
 }
 
@@ -448,5 +787,11 @@ document.addEventListener('livewire:navigated', () => {
     initReveal();
     initProductImages();
     initFlyToCart();
+    initCartQuantity();
     initStatusPolling();
+});
+
+document.addEventListener('livewire:navigating', () => {
+    cartQuantityState.forEach((state) => window.clearTimeout(state.timer));
+    cartQuantityState.clear();
 });
