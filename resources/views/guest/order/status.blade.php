@@ -43,7 +43,23 @@
                 </span>
             </div>
 
-            <ol class="status-track" aria-label="Tahapan pesanan">
+            @php
+                $statusStepCount = count($order->status_steps);
+                $statusStepIndex = $order->status_step_index;
+                $statusProgress = $statusStepIndex >= 0 && $statusStepCount > 1
+                    ? round(($statusStepIndex / ($statusStepCount - 1)) * 100)
+                    : 0;
+            @endphp
+
+            <ol
+                class="status-track {{ $order->order_status === 'cancelled' ? 'is-cancelled' : '' }}"
+                style="--status-progress: {{ $statusProgress }}%"
+                aria-label="Tahapan pesanan"
+            >
+                <li class="status-rail" aria-hidden="true">
+                    <span class="status-rail-fill"></span>
+                </li>
+
                 @foreach ($order->status_steps as $index => $step)
                     <li class="status-step" data-step-index="{{ $index }}" data-state="{{ $step['state'] }}">
                         <span class="status-dot" aria-hidden="true">

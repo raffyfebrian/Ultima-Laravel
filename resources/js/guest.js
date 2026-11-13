@@ -154,6 +154,146 @@ function initCartBadge() {
 }
 
 /* --------------------------------------------------------------------------
+   Gambar produk: skeleton + blur-up
+   -------------------------------------------------------------------------- */
+
+function markProductImageReady(img) {
+    const media = img.closest('.product-media');
+
+    if (!media) {
+        return;
+    }
+
+    media.classList.remove('is-loading');
+
+    if (img.naturalWidth === 0) {
+        media.classList.add('is-broken');
+    }
+}
+
+function initProductImages() {
+    document.querySelectorAll('[data-product-image]').forEach((img) => {
+        if (img.dataset.imageReady === 'true') {
+            return;
+        }
+
+        img.dataset.imageReady = 'true';
+
+        const media = img.closest('.product-media');
+
+        if (!img.complete) {
+            media?.classList.add('is-loading');
+            img.addEventListener('load', () => markProductImageReady(img), { once: true });
+            img.addEventListener('error', () => markProductImageReady(img), { once: true });
+
+            return;
+        }
+
+        markProductImageReady(img);
+    });
+}
+
+/* --------------------------------------------------------------------------
+   Fly-to-cart: umpan balik visual saat item ditambahkan
+   -------------------------------------------------------------------------- */
+
+function initFlyToCart() {
+    if (reduceMotion.matches || typeof Element.prototype.animate !== 'function') {
+        return;
+    }
+
+    if (document.documentElement.dataset.flyToCartReady === 'true') {
+        return;
+    }
+
+    document.documentElement.dataset.flyToCartReady = 'true';
+
+    document.addEventListener(
+        'click',
+        (event) => {
+            if (reduceMotion.matches) {
+                return;
+            }
+
+            const button = event.target.closest('.product-add');
+
+            if (!button || button.disabled || button.getAttribute('aria-disabled') === 'true') {
+                return;
+            }
+
+            const card = button.closest('[data-product-card]');
+            const target = document.querySelector('.guest-cart-button');
+
+            if (!card || !target) {
+                return;
+            }
+
+            const media = card.querySelector('.product-media');
+            const image = media?.querySelector('img');
+            const sourceRect = (media ?? card).getBoundingClientRect();
+            const targetRect = target.getBoundingClientRect();
+            const size = 46;
+
+            if (sourceRect.width === 0 || targetRect.width === 0) {
+                return;
+            }
+
+            const fly = document.createElement('span');
+            fly.className = 'fly-to-cart';
+            fly.setAttribute('aria-hidden', 'true');
+            fly.style.width = `${size}px`;
+            fly.style.height = `${size}px`;
+            fly.style.left = `${sourceRect.left + sourceRect.width / 2 - size / 2}px`;
+            fly.style.top = `${sourceRect.top + sourceRect.height / 2 - size / 2}px`;
+
+            if (image && image.complete && image.naturalWidth > 0) {
+                fly.style.backgroundImage = `url("${image.currentSrc || image.src}")`;
+            } else {
+                fly.textContent = (card.dataset.name ?? 'N').trim().charAt(0).toUpperCase();
+            }
+
+            document.body.appendChild(fly);
+
+            const dx =
+                targetRect.left + targetRect.width / 2 - (sourceRect.left + sourceRect.width / 2);
+            const dy =
+                targetRect.top + targetRect.height / 2 - (sourceRect.top + sourceRect.height / 2);
+            const midX = dx * 0.5;
+            const midY = dy * 0.5 - Math.min(120, Math.abs(dx) * 0.25 + 40);
+
+            const animation = fly.animate(
+                [
+                    { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+                    {
+                        transform: `translate(${midX}px, ${midY}px) scale(0.76)`,
+                        opacity: 0.95,
+                        offset: 0.55,
+                    },
+                    { transform: `translate(${dx}px, ${dy}px) scale(0.18)`, opacity: 0.2 },
+                ],
+                {
+                    duration: 520,
+                    easing: 'cubic-bezier(0.22, 0.61, 0.36, 1)',
+                },
+            );
+
+            const cleanup = () => {
+                fly.remove();
+                target.classList.remove('is-receiving');
+            };
+
+            animation.addEventListener('finish', cleanup, { once: true });
+            animation.addEventListener('cancel', cleanup, { once: true });
+
+            target.classList.remove('is-receiving');
+            void target.offsetWidth;
+            target.classList.add('is-receiving');
+        },
+        { passive: true },
+    );
+}
+
+/* --------------------------------------------------------------------------
    Polling status pesanan (maksimal sekali per 20 detik)
    -------------------------------------------------------------------------- */
 
@@ -191,6 +331,27 @@ function applyOrderStatus(root, data) {
                 item.dataset.state = step.state;
             }
         });
+    }
+
+    const track = root.querySelector('.status-track');
+
+    if (track) {
+        const steps = Array.isArray(data.steps) ? data.steps : [];
+        const total = Math.max(1, steps.length - 1);
+        let index = Number(data.step_index);
+
+        if (!Number.isFinite(index) || index < 0) {
+            index = steps.findIndex((step) => step.state === 'current');
+        }
+
+        if (!Number.isFinite(index) || index < 0) {
+            index = 0;
+        }
+
+        const percent = Math.max(0, Math.min(100, (index / total) * 100));
+
+        track.style.setProperty('--status-progress', `${percent}%`);
+        track.classList.toggle('is-cancelled', data.order_status === 'cancelled');
     }
 
     if (updated) {
@@ -271,6 +432,8 @@ function bootGuest() {
     initCatalog();
     initReveal();
     initCartBadge();
+    initProductImages();
+    initFlyToCart();
     initStatusPolling();
 }
 
@@ -283,5 +446,7 @@ if (document.readyState === 'loading') {
 document.addEventListener('livewire:navigated', () => {
     initCatalog();
     initReveal();
+    initProductImages();
+    initFlyToCart();
     initStatusPolling();
 });

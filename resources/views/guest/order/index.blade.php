@@ -180,10 +180,12 @@
                 </div>
 
                 <div class="guest-grid">
+                    @php $productIndex = 0; @endphp
                     @foreach ($categories as $category)
                         @foreach ($category->products as $product)
                             <article
                                 class="product-card guest-reveal {{ $product->is_available ? '' : 'is-soldout' }}"
+                                style="--reveal-delay: {{ min($productIndex, 7) * 45 }}ms"
                                 data-product-card
                                 data-category="{{ $category->id }}"
                                 data-category-name="{{ $category->name }}"
@@ -203,7 +205,10 @@
                                     aria-label="Lihat detail {{ $product->name }}"
                                 >
                                     @if ($product->image_path)
+                                        <span class="product-skeleton" aria-hidden="true"></span>
                                         <img
+                                            class="product-image"
+                                            data-product-image
                                             src="{{ \Illuminate\Support\Facades\Storage::url($product->image_path) }}"
                                             alt="{{ $product->name }}"
                                             loading="lazy"
@@ -236,6 +241,7 @@
                                                 type="button"
                                                 class="product-add"
                                                 x-data="{ added: false }"
+                                                :class="{ 'is-added': added }"
                                                 @click="
                                                     $dispatch('add-to-cart', { productId: {{ $product->id }}, quantity: 1, notes: '' });
                                                     added = true;
@@ -243,13 +249,15 @@
                                                 "
                                                 aria-label="Tambah {{ $product->name }} ke keranjang"
                                             >
-                                                <svg x-show="!added" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
-                                                    <path d="M12 5v14M5 12h14"/>
-                                                </svg>
-                                                <svg x-show="added" x-cloak viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                                    <path d="m5 12 5 5L20 7"/>
-                                                </svg>
-                                                <span x-text="added ? 'Ditambahkan' : 'Tambah'">Tambah</span>
+                                                <span class="product-add-icon" aria-hidden="true">
+                                                    <svg x-show="!added" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                                                        <path d="M12 5v14M5 12h14"/>
+                                                    </svg>
+                                                    <svg x-show="added" x-cloak viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                                                        <path d="m5 12 5 5L20 7"/>
+                                                    </svg>
+                                                </span>
+                                                <span class="product-add-label" x-text="added ? 'Ditambahkan' : 'Tambah'" aria-live="polite">Tambah</span>
                                             </button>
                                         @else
                                             <button type="button" class="product-add" disabled>
@@ -259,6 +267,7 @@
                                     </div>
                                 </div>
                             </article>
+                            @php $productIndex++; @endphp
                         @endforeach
                     @endforeach
                 </div>
